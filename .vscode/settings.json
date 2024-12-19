@@ -1,0 +1,11 @@
+{
+    "java.project.sourcePaths": [
+        "src"
+    ],
+    "java.project.outputPath": "bin",
+    "java.project.referencedLibraries": [
+        "testsrv/server.jar"
+    ],
+    "java.project.exportJar.targetPath": "testsrv/plugins/HeadStats.jar",
+    "java.compile.nullAnalysis.mode": "automatic",
+}

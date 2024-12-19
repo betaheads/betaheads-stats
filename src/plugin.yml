@@ -1,0 +1,16 @@
+name: BetaheadsStats
+version: '1.0.0'
+author: mishavolkov
+website: http://betaheads.net
+main: net.betaheads.BetaheadsStats.HeadStats
+description: Players stats.
+softdepend: []
+commands:
+  stats:
+    description: 'Show your statistic'
+    usage: 'Usage: /<command> help'
+    aliases: []
+permissions:
+  stats.*:
+    description: 'Show your stats'
+    default: true
