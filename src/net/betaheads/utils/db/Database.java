@@ -1,15 +1,15 @@
-package net.betaheads.utils;
+package net.betaheads.utils.db;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 import net.betaheads.BetaheadsStats.Config;
+import net.betaheads.utils.PluginLogger;
+import net.betaheads.utils.MySQLConnectionPool;
 
 public class Database {
-  private static Logger log;
   private static MySQLConnectionPool pool;
 
   private static String dbUser;
@@ -19,9 +19,7 @@ public class Database {
   private static String dbName;
 
   // move logger to another class to make [NAMEDLOG]
-  public static void init(Logger logger) {
-    log = logger;
-
+  public static void init() {
     dbUser = Config.getMysqlUsername();
     dbPass = Config.getMysqlPassword();
     dbHost = Config.getMysqlHost();
@@ -32,7 +30,7 @@ public class Database {
       pool = new MySQLConnectionPool(buildConnectionString(),
           dbUser, dbPass);
     } catch (Exception e) {
-      log.info(e.getMessage());
+      PluginLogger.info(e.getMessage());
     }
   }
 
@@ -43,7 +41,6 @@ public class Database {
     ArrayList<ArrayList<Object>> result = null;
 
     try {
-
       conn = pool.getConnection();
 
       statement = conn.createStatement();
@@ -69,11 +66,50 @@ public class Database {
       }
 
       return result;
-
     } catch (Exception e) {
-      log.info(e.getMessage());
+      PluginLogger.info(e.getMessage());
 
       return null;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  public static int executeUpdate(String query) {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      return statement.executeUpdate(query);
+
+    } catch (Exception e) {
+      PluginLogger.info(e.getMessage());
+
+      return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  public static boolean execute(String query) {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      return statement.execute(query);
+
+    } catch (Exception e) {
+      PluginLogger.info(e.getMessage());
+
+      return false;
     } finally {
       closeQuery(conn, statement);
     }
@@ -84,7 +120,7 @@ public class Database {
       statement.close();
       connection.close();
     } catch (Exception e) {
-      log.info(e.getMessage());
+      PluginLogger.info(e.getMessage());
     }
   }
 

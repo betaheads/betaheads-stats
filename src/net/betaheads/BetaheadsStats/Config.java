@@ -7,7 +7,7 @@ import org.bukkit.util.config.Configuration;
 public class Config {
   static private Configuration configuration = null;
 
-  static private String CONFIGURATION_FILE_PATH = "./plugins/HeadStats/config.yml";
+  static private String CONFIGURATION_FILE_PATH = "./plugins/BetaheadsStats/config.yml";
 
   static void loadConfigFile() {
     File file = new File(CONFIGURATION_FILE_PATH);

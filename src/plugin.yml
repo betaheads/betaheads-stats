@@ -2,7 +2,7 @@ name: BetaheadsStats
 version: '1.0.0'
 author: mishavolkov
 website: http://betaheads.net
-main: net.betaheads.BetaheadsStats.HeadStats
+main: net.betaheads.BetaheadsStats.BetaheadsStats
 description: Players stats.
 softdepend: []
 commands:

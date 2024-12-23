@@ -1,6 +1,6 @@
 package net.betaheads.BetaheadsStats.entities;
 
-import net.betaheads.utils.Database;
+import net.betaheads.utils.db.Database;
 
 public class Player {
   // database fields
@@ -36,6 +36,8 @@ public class Player {
   }
 
   public void saveDataToDb() {
+    this.played_ms = getTotalPlayedTime();
+
     Database.executeQuery(
         "INSERT INTO players (username, played_ms) " +
             "VALUES ('" + this.username + "'," + this.played_ms + ") " +

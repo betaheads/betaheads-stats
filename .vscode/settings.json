@@ -6,6 +6,6 @@
     "java.project.referencedLibraries": [
         "testsrv/server.jar"
     ],
-    "java.project.exportJar.targetPath": "testsrv/plugins/HeadStats.jar",
+    "java.project.exportJar.targetPath": "testsrv/plugins/BetaheadsStats.jar",
     "java.compile.nullAnalysis.mode": "automatic",
 }
