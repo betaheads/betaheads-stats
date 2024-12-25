@@ -1,32 +1,21 @@
 package net.betaheads.BetaheadsStats.entities;
 
-public class User {
-  // database fields
-  private long id;
-  private String username;
-  private long played_ms;
+import net.betaheads.utils.db.Repository;
+import net.betaheads.utils.db.entities.UserEntity;
 
-  // operational private fields
+public class User extends UserEntity {
   private long joinTimeMs;
 
-  User() {
+  public User(String username) {
+    this.name = username;
 
-  }
+    this.joinTimeMs = System.currentTimeMillis();
 
-  public long getId() {
-    return this.id;
+    loadUserData();
   }
 
   public String getUsername() {
-    return this.username;
-  }
-
-  public void setUsername(String username) {
-    this.username = username;
-  }
-
-  public void setJoinTimeMs(long joinTimeMs) {
-    this.joinTimeMs = joinTimeMs;
+    return this.name;
   }
 
   public long getTotalPlayedTime() {
@@ -34,15 +23,27 @@ public class User {
   }
 
   public long getCurrentSessionPlayTime() {
-    return System.currentTimeMillis() - (System.currentTimeMillis() - joinTimeMs);
+    return System.currentTimeMillis() - this.joinTimeMs;
   }
 
   public void saveDataToDb() {
     this.played_ms = getTotalPlayedTime();
 
-    // Database.executeUpdate(
-    //     "INSERT INTO players (username, played_ms) " +
-    //         "VALUES ('" + this.username + "'," + this.played_ms + ") " +
-    //         "ON DUPLICATE KEY UPDATE played_ms = " + this.played_ms + ";");
+    Repository.saveUser(this);
+  }
+
+  public void loadUserData() {
+    UserEntity user = Repository.getUser(this.name);
+
+    if (user == null) {
+      this.played_ms = 0;
+      this.saveDataToDb();
+
+      user = Repository.getUser(this.name);
+    }
+
+    this.id = user.id;
+    this.name = user.name;
+    this.played_ms = user.played_ms;
   }
 }

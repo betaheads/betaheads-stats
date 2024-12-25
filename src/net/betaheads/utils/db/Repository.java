@@ -34,4 +34,8 @@ public class Repository {
   public static UserEntity getUser(String username) {
     return repo.getUser(username);
   }
+
+  public static int saveUser(UserEntity user) {
+    return repo.saveUser(user);
+  }
 }

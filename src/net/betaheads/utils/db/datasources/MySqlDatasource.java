@@ -163,7 +163,10 @@ public class MySqlDatasource implements Datasource {
       statement.setString(1, username);
 
       ResultSet rs = statement.executeQuery();
-      rs.next();
+
+      if (!rs.next()) {
+        return null;
+      }
 
       UserEntity user = new UserEntity();
 
@@ -176,6 +179,31 @@ public class MySqlDatasource implements Datasource {
       PluginLogger.error(e.getMessage());
 
       return null;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public int saveUser(UserEntity user) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn
+          .prepareStatement("INSERT INTO users(name, played_ms) VALUES(?, ?) ON DUPLICATE KEY UPDATE played_ms = ?;");
+
+      statement.setString(1, user.name);
+      statement.setLong(2, user.played_ms);
+      statement.setLong(3, user.played_ms);
+
+      return statement.executeUpdate();
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return -1;
     } finally {
       closeQuery(conn, statement);
     }

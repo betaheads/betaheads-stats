@@ -22,4 +22,6 @@ public interface Datasource {
   public void createUsersTable();
 
   public UserEntity getUser(String username);
+
+  public int saveUser(UserEntity user);
 }
