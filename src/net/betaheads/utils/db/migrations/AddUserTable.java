@@ -1,7 +1,7 @@
 package net.betaheads.utils.db.migrations;
 
-import net.betaheads.utils.db.Database;
 import net.betaheads.utils.db.Migration;
+import net.betaheads.utils.db.Repository;
 
 public class AddUserTable implements Migration {
   @Override
@@ -11,11 +11,6 @@ public class AddUserTable implements Migration {
 
   @Override
   public void run() {
-    Database.execute(
-        "CREATE TABLE users (" +
-            "id INT AUTO_INCREMENT PRIMARY KEY," +
-            "name VARCHAR(255) UNIQUE," +
-            "played_ms BIGINT" +
-            ");");
+   Repository.createUsersTable();
   }
 }

@@ -1,8 +1,6 @@
 package net.betaheads.BetaheadsStats.entities;
 
-import net.betaheads.utils.db.Database;
-
-public class Player {
+public class User {
   // database fields
   private long id;
   private String username;
@@ -10,6 +8,10 @@ public class Player {
 
   // operational private fields
   private long joinTimeMs;
+
+  User() {
+
+  }
 
   public long getId() {
     return this.id;
@@ -28,7 +30,7 @@ public class Player {
   }
 
   public long getTotalPlayedTime() {
-    return played_ms + getCurrentSessionPlayTime();
+    return this.played_ms + getCurrentSessionPlayTime();
   }
 
   public long getCurrentSessionPlayTime() {
@@ -38,10 +40,9 @@ public class Player {
   public void saveDataToDb() {
     this.played_ms = getTotalPlayedTime();
 
-    Database.executeQuery(
-        "INSERT INTO players (username, played_ms) " +
-            "VALUES ('" + this.username + "'," + this.played_ms + ") " +
-            "ON DUPLICATE KEY UPDATE played_ms = " + this.played_ms + ";",
-        false, 0);
+    // Database.executeUpdate(
+    //     "INSERT INTO players (username, played_ms) " +
+    //         "VALUES ('" + this.username + "'," + this.played_ms + ") " +
+    //         "ON DUPLICATE KEY UPDATE played_ms = " + this.played_ms + ";");
   }
 }

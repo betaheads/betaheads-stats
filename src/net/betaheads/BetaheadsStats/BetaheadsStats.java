@@ -1,11 +1,10 @@
 package net.betaheads.BetaheadsStats;
 
-import java.util.ArrayList;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import net.betaheads.utils.PluginLogger;
-import net.betaheads.utils.db.Database;
 import net.betaheads.utils.db.MigrationRunner;
+import net.betaheads.utils.db.Repository;
+import net.betaheads.utils.db.datasources.MySqlDatasource;
 
 public class BetaheadsStats extends JavaPlugin {
   @Override
@@ -14,13 +13,10 @@ public class BetaheadsStats extends JavaPlugin {
 
     PluginLogger.setLogger(getServer().getLogger());
 
-    Database.init();
+    Repository.setRepository(new MySqlDatasource()); // only mysql for now
+    Repository.init();
 
     MigrationRunner.runMigrations();
-
-    ArrayList<ArrayList<Object>> res = Database.executeQuery("SELECT * FROM untitled_table;", true, 3);
-
-    PluginLogger.info(res.get(0).get(2).toString());
   }
 
   @Override

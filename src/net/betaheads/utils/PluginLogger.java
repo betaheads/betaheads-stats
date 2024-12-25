@@ -26,4 +26,8 @@ public class PluginLogger {
   public static void severe(String log) {
     logger.severe(pluginPrefix + log);
   }
+
+  public static void error(String log) {
+    logger.warning(pluginPrefix + "ERROR: " + log);
+  }
 }

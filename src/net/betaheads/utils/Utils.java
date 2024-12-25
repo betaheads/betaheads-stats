@@ -13,8 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Logger;
 
-public class Utils
-{
+public class Utils {
 	public static void download(Logger log, URL url, File file) throws IOException {
 		if (!file.getParentFile().exists())
 			file.getParentFile().mkdir();
@@ -31,8 +30,8 @@ public class Utils
 		while ((len = in.read(buffer)) >= 0) {
 			out.write(buffer, 0, len);
 			downloaded += len;
-			if ((int)((System.currentTimeMillis() - start) / 500) > msgs) {
-				log.info((int)(downloaded / (double)size * 100d) + "%");
+			if ((int) ((System.currentTimeMillis() - start) / 500) > msgs) {
+				log.info((int) (downloaded / (double) size * 100d) + "%");
 				msgs++;
 			}
 		}
@@ -55,7 +54,8 @@ public class Utils
 		try {
 			Integer.parseInt(str);
 			return true;
-		} catch (final NumberFormatException ex) {}
+		} catch (final NumberFormatException ex) {
+		}
 		return false;
 	}
 
@@ -119,7 +119,8 @@ public class Utils
 		} else
 			timestamp = spec[0] + " " + spec[1];
 		try {
-			return (int)((System.currentTimeMillis() - new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").parse(timestamp).getTime()) / 60000);
+			return (int) ((System.currentTimeMillis()
+					- new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").parse(timestamp).getTime()) / 60000);
 		} catch (final ParseException ex) {
 			return -1;
 		}
@@ -130,5 +131,37 @@ public class Utils
 		for (int i = 0; i < count; i++)
 			filled.append(' ');
 		return filled.toString();
+	}
+
+	// System.out.println(formatMillis(3784000)); // Output: "1 h, 3 min, 4 sec"
+	public static String formatMillis(long millis) {
+		long totalSeconds = millis / 1000;
+		long seconds = totalSeconds % 60;
+		long totalMinutes = totalSeconds / 60;
+		long minutes = totalMinutes % 60;
+		long hours = totalMinutes / 60;
+
+		StringBuilder result = new StringBuilder();
+		if (hours > 0) {
+			result.append(hours).append(" h");
+		}
+
+		if (minutes > 0) {
+			if (result.length() > 0) {
+				result.append(", ");
+			}
+
+			result.append(minutes).append(" min");
+		}
+
+		if (seconds > 0 || result.length() == 0) {
+			if (result.length() > 0) {
+				result.append(", ");
+			}
+
+			result.append(seconds).append(" sec");
+		}
+
+		return result.toString();
 	}
 }
