@@ -35,7 +35,7 @@ public class MySQLConnectionPool implements Closeable
 	private final Lock lock = new ReentrantLock();
 
 	public MySQLConnectionPool(String url, String user, String password) throws ClassNotFoundException {
-		Class.forName("com.mysql.jdbc.Driver");
+		Class.forName("com.mysql.cj.jdbc.Driver");
 		this.url = url;
 		this.user = user;
 		this.password = password;

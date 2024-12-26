@@ -4,7 +4,8 @@
     ],
     "java.project.outputPath": "bin",
     "java.project.referencedLibraries": [
-        "testsrv/server.jar"
+        "testsrv/server.jar",
+        "testsrv/lib/mysql-connector-j-9.1.0.jar"
     ],
     "java.project.exportJar.targetPath": "testsrv/plugins/BetaheadsStats.jar",
     "java.compile.nullAnalysis.mode": "automatic",
