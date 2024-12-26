@@ -6,7 +6,9 @@ import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.betaheads.BetaheadsStats.commands.StatsCommand;
 import net.betaheads.BetaheadsStats.listeners.BhPlayerListener;
+import net.betaheads.BetaheadsStats.tasks.SaveUsers;
 import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.MigrationRunner;
 import net.betaheads.utils.db.Repository;
@@ -29,16 +31,21 @@ public class BetaheadsStats extends JavaPlugin {
   public void onEnable() {
     PluginManager pm = Bukkit.getServer().getPluginManager();
 
+    getServer().getScheduler().scheduleSyncRepeatingTask(this, new SaveUsers(), 6000L, 6000L); // every 5 mins
+
     BhPlayerListener playerListener = new BhPlayerListener();
     pm.registerEvent(Type.PLAYER_JOIN, playerListener,
         Priority.Lowest, this);
     pm.registerEvent(Type.PLAYER_QUIT, playerListener,
         Priority.Lowest, this);
 
+    this.getCommand("stats").setExecutor(new StatsCommand());
+
+    PluginLogger.info("Enabled.");
   }
 
   @Override
   public void onDisable() {
-    // TODO Auto-generated method stub
+    UserManager.saveAllUsersData();
   }
 }

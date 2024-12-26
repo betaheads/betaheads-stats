@@ -5,6 +5,7 @@ import net.betaheads.utils.db.entities.UserEntity;
 
 public class User extends UserEntity {
   private long joinTimeMs;
+  private long totalWhenJoin;
 
   public User(String username) {
     this.name = username;
@@ -19,25 +20,25 @@ public class User extends UserEntity {
   }
 
   public long getTotalPlayedTime() {
-    return this.played_ms + getCurrentSessionPlayTime();
+    return this.totalWhenJoin + getCurrentSessionPlayTime();
   }
 
   public long getCurrentSessionPlayTime() {
     return System.currentTimeMillis() - this.joinTimeMs;
   }
 
-  public void saveDataToDb() {
+  public void updateDbData() {
     this.played_ms = getTotalPlayedTime();
 
-    Repository.saveUser(this);
+    Repository.updateUser(this);
   }
 
-  public void loadUserData() {
+  private void loadUserData() {
     UserEntity user = Repository.getUser(this.name);
 
     if (user == null) {
       this.played_ms = 0;
-      this.saveDataToDb();
+      Repository.saveUser(this);
 
       user = Repository.getUser(this.name);
     }
@@ -45,5 +46,7 @@ public class User extends UserEntity {
     this.id = user.id;
     this.name = user.name;
     this.played_ms = user.played_ms;
+
+    this.totalWhenJoin = this.played_ms;
   }
 }

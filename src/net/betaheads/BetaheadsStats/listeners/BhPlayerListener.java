@@ -8,14 +8,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import net.betaheads.BetaheadsStats.UserManager;
 
 public class BhPlayerListener extends PlayerListener {
-  private UserManager userManager = new UserManager();
-
   @Override
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
     String username = player.getName().toLowerCase();
 
-    userManager.addUser(username);
+    UserManager.addUser(username);
   }
 
   @Override
@@ -23,6 +21,6 @@ public class BhPlayerListener extends PlayerListener {
     Player player = event.getPlayer();
     String username = player.getName().toLowerCase();
 
-    userManager.removeUser(username);
+    UserManager.removeUser(username);
   }
 }

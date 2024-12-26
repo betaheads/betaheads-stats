@@ -38,4 +38,12 @@ public class Repository {
   public static int saveUser(UserEntity user) {
     return repo.saveUser(user);
   }
+
+  public static int[] updateUserBatch(ArrayList<UserEntity> users) {
+    return repo.updateUserBatch(users);
+  }
+
+  public static int updateUser(UserEntity user) {
+    return repo.updateUser(user);
+  }
 }

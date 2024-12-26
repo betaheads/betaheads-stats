@@ -1,27 +1,42 @@
 package net.betaheads.BetaheadsStats;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.betaheads.BetaheadsStats.entities.User;
+import net.betaheads.utils.db.Repository;
+import net.betaheads.utils.db.entities.UserEntity;
 
 public class UserManager {
-  private HashMap<String, User> users = new HashMap<String, User>();
+  private static HashMap<String, User> users = new HashMap<String, User>();
 
-  public void addUser(String username) {
+  public static void addUser(String username) {
     User user = new User(username);
 
     users.put(username, user);
   }
 
-  public void removeUser(String username) {
+  public static void removeUser(String username) {
     User user = users.get(username);
 
-    user.saveDataToDb();
+    user.updateDbData();
 
     users.remove(username);
   }
 
-  public User getUser(String username) {
+  public static User getUser(String username) {
     return users.get(username);
+  }
+
+  public static void saveAllUsersData() {
+    ArrayList<UserEntity> userEntities = new ArrayList<>();
+
+    for (User user : users.values()) {
+      user.played_ms = user.getTotalPlayedTime();
+
+      userEntities.add(user);
+    }
+
+    Repository.updateUserBatch(userEntities);
   }
 }

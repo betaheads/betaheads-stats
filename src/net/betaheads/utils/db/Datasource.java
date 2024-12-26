@@ -24,4 +24,8 @@ public interface Datasource {
   public UserEntity getUser(String username);
 
   public int saveUser(UserEntity user);
+
+  public int[] updateUserBatch(ArrayList<UserEntity> users);
+
+  public int updateUser(UserEntity user);
 }
