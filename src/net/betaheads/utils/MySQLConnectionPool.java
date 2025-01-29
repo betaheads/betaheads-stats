@@ -24,6 +24,7 @@ import java.util.Vector;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import net.betaheads.BetaheadsStats.Config;
 
 public class MySQLConnectionPool implements Closeable
 {
@@ -35,7 +36,9 @@ public class MySQLConnectionPool implements Closeable
 	private final Lock lock = new ReentrantLock();
 
 	public MySQLConnectionPool(String url, String user, String password) throws ClassNotFoundException {
-		Class.forName("com.mysql.cj.jdbc.Driver");
+		String className = Config.getMysqlNewAuthMethod() ? "com.mysql.cj.jdbc.Driver" : "com.mysql.jdbc.Driver";
+
+		Class.forName(className);
 		this.url = url;
 		this.user = user;
 		this.password = password;

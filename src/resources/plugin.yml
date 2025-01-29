@@ -1,7 +1,7 @@
-name: BetaheadsStats
-version: '1.0.0'
+name: ${project.name}
+version: ${project.version}
 author: mishavolkov
-website: http://betaheads.net
+website: ${project.url}
 main: net.betaheads.BetaheadsStats.BetaheadsStats
 description: Players stats.
 softdepend: []

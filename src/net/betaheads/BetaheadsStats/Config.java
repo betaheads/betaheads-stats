@@ -25,6 +25,8 @@ public class Config {
     getMysqlHost();
     getMysqlPort();
     getMysqlDb();
+    getMysqlNewAuthMethod();
+    writeMySqlNewAuthInfo();
 
     configuration.save();
   }
@@ -47,5 +49,14 @@ public class Config {
 
   public static String getMysqlDb() {
     return configuration.getString("mysql.database", "headstats");
+  }
+
+  public static Boolean getMysqlNewAuthMethod() {
+    return configuration.getBoolean("mysql.newAuthMethod", false);
+  }
+
+  private static void writeMySqlNewAuthInfo() {
+    configuration.getString("mysql.newAuthMethodInfo",
+        "If you use 'newAuthMethod: true' you need to download mysql connector jar to your /lib folder and name it 'mysql-connector.jar'");
   }
 }
