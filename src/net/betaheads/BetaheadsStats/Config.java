@@ -48,7 +48,7 @@ public class Config {
   }
 
   public static String getMysqlDb() {
-    return configuration.getString("mysql.database", "headstats");
+    return configuration.getString("mysql.database", "betaheadstats");
   }
 
   public static Boolean getMysqlNewAuthMethod() {

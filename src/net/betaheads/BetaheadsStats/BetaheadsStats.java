@@ -15,6 +15,8 @@ import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.datasources.MySqlDatasource;
 
 public class BetaheadsStats extends JavaPlugin {
+  public static BetaheadsStats plugin = null;
+
   @Override
   public void onLoad() {
     Config.loadConfigFile();
@@ -29,9 +31,10 @@ public class BetaheadsStats extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    plugin = this;
     PluginManager pm = Bukkit.getServer().getPluginManager();
 
-    getServer().getScheduler().scheduleSyncRepeatingTask(this, new SaveUsers(), 6000L, 6000L); // every 5 mins
+    getServer().getScheduler().scheduleAsyncRepeatingTask(this, new SaveUsers(), 6000L, 6000L); // every 5 mins
 
     BhPlayerListener playerListener = new BhPlayerListener();
     pm.registerEvent(Type.PLAYER_JOIN, playerListener,
