@@ -7,6 +7,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.betaheads.BetaheadsStats.commands.StatsCommand;
+import net.betaheads.BetaheadsStats.listeners.BhBlockListener;
 import net.betaheads.BetaheadsStats.listeners.BhPlayerListener;
 import net.betaheads.BetaheadsStats.tasks.SaveUsers;
 import net.betaheads.utils.PluginLogger;
@@ -37,10 +38,12 @@ public class BetaheadsStats extends JavaPlugin {
     getServer().getScheduler().scheduleAsyncRepeatingTask(this, new SaveUsers(), 6000L, 6000L); // every 5 mins
 
     BhPlayerListener playerListener = new BhPlayerListener();
-    pm.registerEvent(Type.PLAYER_JOIN, playerListener,
-        Priority.Lowest, this);
-    pm.registerEvent(Type.PLAYER_QUIT, playerListener,
-        Priority.Lowest, this);
+    BhBlockListener blockListener = new BhBlockListener();
+
+    pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Lowest, this);
+    pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Lowest, this);
+    pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Lowest, this);
+    pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Lowest, this);
 
     this.getCommand("stats").setExecutor(new StatsCommand());
 

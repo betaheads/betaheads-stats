@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import net.betaheads.BetaheadsStats.Config;
 import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.Datasource;
+import net.betaheads.utils.db.entities.BlockStatEntity;
 import net.betaheads.utils.db.entities.UserEntity;
 import net.betaheads.utils.MySQLConnectionPool;
 
@@ -261,6 +262,132 @@ public class MySqlDatasource implements Datasource {
       PluginLogger.error(e.getMessage());
 
       return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public void createBlockStatsTable() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      statement.execute(
+          "CREATE TABLE block_stats (" +
+              "id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT," +
+              "user_id INT NOT NULL," +
+              "block VARCHAR(255) NOT NULL," +
+              "action VARCHAR(50) NOT NULL," +
+              "count BIGINT NOT NULL DEFAULT 0," +
+              "INDEX IDX_user_id (user_id)" +
+              ");");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public int saveBlockStat(BlockStatEntity blockStat) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn
+          .prepareStatement("INSERT INTO block_stats(user_id, block, action, count) VALUES(?, ?, ?, ?);");
+
+      statement.setLong(1, blockStat.user_id);
+      statement.setString(2, blockStat.block);
+      statement.setString(3, blockStat.action);
+      statement.setLong(4, blockStat.count);
+
+      return statement.executeUpdate();
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      conn.setAutoCommit(false);
+
+      statement = conn
+          .prepareStatement("UPDATE block_stats SET count = ? WHERE id = ?;");
+
+      for (BlockStatEntity stat : blockStats) {
+        statement.setLong(1, stat.count);
+        statement.setLong(2, stat.id);
+
+        statement.addBatch();
+      }
+
+      int[] res = statement.executeBatch();
+
+      conn.commit();
+
+      return res;
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return null;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public ArrayList<BlockStatEntity> getUserBlockStats(String userId) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    ArrayList<BlockStatEntity> result = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.prepareStatement("SELECT id, user_id, block, action, count FROM block_stats WHERE user_id = ?;");
+
+      statement.setString(1, userId);
+
+      ResultSet rs = statement.executeQuery();
+
+      result = new ArrayList<BlockStatEntity>();
+
+      while (rs.next()) {
+        BlockStatEntity entity = new BlockStatEntity();
+
+        entity.id = rs.getLong("id");
+        entity.user_id = rs.getLong("user_id");
+        entity.block = rs.getString("block");
+        entity.action = rs.getString("action");
+        entity.count = rs.getLong("count");
+
+        result.add(entity);
+      }
+
+      return result;
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return null;
     } finally {
       closeQuery(conn, statement);
     }

@@ -2,6 +2,7 @@ package net.betaheads.utils.db;
 
 import java.util.ArrayList;
 
+import net.betaheads.utils.db.entities.BlockStatEntity;
 import net.betaheads.utils.db.entities.UserEntity;
 
 public interface Datasource {
@@ -28,4 +29,12 @@ public interface Datasource {
   public int[] updateUserBatch(ArrayList<UserEntity> users);
 
   public int updateUser(UserEntity user);
+
+  public void createBlockStatsTable();
+
+  public ArrayList<BlockStatEntity> getUserBlockStats(String userId);
+
+  public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats);
+
+  public int saveBlockStat(BlockStatEntity blockStat);
 }
