@@ -294,7 +294,7 @@ public class MySqlDatasource implements Datasource {
   }
 
   @Override
-  public int saveBlockStat(BlockStatEntity blockStat) {
+  public long saveBlockStat(BlockStatEntity blockStat) {
     Connection conn = null;
     PreparedStatement statement = null;
 
@@ -302,14 +302,23 @@ public class MySqlDatasource implements Datasource {
       conn = pool.getConnection();
 
       statement = conn
-          .prepareStatement("INSERT INTO block_stats(user_id, block, action, count) VALUES(?, ?, ?, ?);");
+          .prepareStatement("INSERT INTO block_stats(user_id, block, action, count) VALUES(?, ?, ?, ?);",
+              PreparedStatement.RETURN_GENERATED_KEYS);
 
       statement.setLong(1, blockStat.user_id);
       statement.setString(2, blockStat.block);
       statement.setString(3, blockStat.action);
       statement.setLong(4, blockStat.count);
 
-      return statement.executeUpdate();
+      int affected = statement.executeUpdate();
+
+      if (affected > 0) {
+        ResultSet rs = statement.getGeneratedKeys();
+        rs.next();
+        return rs.getLong(1);
+      }
+
+      return -1;
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
 
@@ -354,7 +363,7 @@ public class MySqlDatasource implements Datasource {
   }
 
   @Override
-  public ArrayList<BlockStatEntity> getUserBlockStats(String userId) {
+  public ArrayList<BlockStatEntity> getUserBlockStats(Long userId) {
     Connection conn = null;
     PreparedStatement statement = null;
 
@@ -365,7 +374,7 @@ public class MySqlDatasource implements Datasource {
 
       statement = conn.prepareStatement("SELECT id, user_id, block, action, count FROM block_stats WHERE user_id = ?;");
 
-      statement.setString(1, userId);
+      statement.setLong(1, userId);
 
       ResultSet rs = statement.executeQuery();
 

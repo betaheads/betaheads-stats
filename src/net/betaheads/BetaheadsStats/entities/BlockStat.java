@@ -5,7 +5,10 @@ import net.betaheads.utils.db.entities.BlockStatEntity;
 
 public class BlockStat extends BlockStatEntity {
 
-  BlockStat(BlockStatEntity entity) {
+  public BlockStat() {
+  };
+
+  public BlockStat(BlockStatEntity entity) {
     this.id = entity.id;
     this.user_id = entity.user_id;
     this.block = entity.block;
@@ -17,7 +20,7 @@ public class BlockStat extends BlockStatEntity {
     this.count++;
   }
 
-  public void createDbData() {
-    Repository.saveBlockStat(this);
+  public long createDbData() {
+    return Repository.saveBlockStat(this);
   }
 }

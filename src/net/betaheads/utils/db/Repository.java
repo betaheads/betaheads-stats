@@ -2,6 +2,7 @@ package net.betaheads.utils.db;
 
 import java.util.ArrayList;
 
+import net.betaheads.BetaheadsStats.entities.BlockStat;
 import net.betaheads.utils.db.entities.BlockStatEntity;
 import net.betaheads.utils.db.entities.UserEntity;
 
@@ -52,15 +53,23 @@ public class Repository {
     repo.createBlockStatsTable();
   };
 
-  public static ArrayList<BlockStatEntity> getUserBlockStats(String userId) {
-    return repo.getUserBlockStats(userId);
+  public static ArrayList<BlockStat> getUserBlockStats(Long userId) {
+    final ArrayList<BlockStatEntity> userStats = repo.getUserBlockStats(userId);
+
+    ArrayList<BlockStat> res = new ArrayList<BlockStat>();
+
+    for (BlockStatEntity stat : userStats) {
+      res.add(new BlockStat(stat));
+    }
+
+    return res;
   };
 
   public static int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats) {
     return repo.updateBatchBlockStatsCounts(blockStats);
   }
 
-  public static int saveBlockStat(BlockStatEntity blockStat) {
+  public static long saveBlockStat(BlockStatEntity blockStat) {
     return repo.saveBlockStat(blockStat);
   }
 }

@@ -32,9 +32,9 @@ public interface Datasource {
 
   public void createBlockStatsTable();
 
-  public ArrayList<BlockStatEntity> getUserBlockStats(String userId);
+  public ArrayList<BlockStatEntity> getUserBlockStats(Long userId);
 
   public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats);
 
-  public int saveBlockStat(BlockStatEntity blockStat);
+  public long saveBlockStat(BlockStatEntity blockStat);
 }

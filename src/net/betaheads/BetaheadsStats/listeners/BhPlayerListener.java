@@ -6,7 +6,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import net.betaheads.BetaheadsStats.BetaheadsStats;
+import net.betaheads.BetaheadsStats.BlockStatsManager;
 import net.betaheads.BetaheadsStats.UserManager;
+import net.betaheads.BetaheadsStats.entities.User;
 
 public class BhPlayerListener extends PlayerListener {
   @Override
@@ -16,6 +18,9 @@ public class BhPlayerListener extends PlayerListener {
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       UserManager.addUser(username);
+      User user = UserManager.getUser(username);
+
+      BlockStatsManager.addUserRecords(user.id);
     });
   }
 
@@ -25,6 +30,9 @@ public class BhPlayerListener extends PlayerListener {
     String username = player.getName().toLowerCase();
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
+      User user = UserManager.getUser(username);
+
+      BlockStatsManager.removeUserRecords(user.id);
       UserManager.removeUser(username);
     });
   }
