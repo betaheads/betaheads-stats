@@ -34,7 +34,9 @@ public class StatsCommand implements CommandExecutor {
         ChatColor.GOLD + "Current session playtime: " + Utils.formatMillis(user.getCurrentSessionPlayTime()));
 
     for (BlockStat stat : stats.values()) {
-      player.sendMessage(ChatColor.GOLD + stat.action + " " + stat.block + " " + Long.toString(stat.count));
+      String blockName = Utils.toReadableName(stat.block);
+
+      player.sendMessage(ChatColor.GOLD + stat.action + " " + blockName + " " + Long.toString(stat.count));
     }
 
     return true;

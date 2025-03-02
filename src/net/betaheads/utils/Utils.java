@@ -164,4 +164,28 @@ public class Utils {
 
 		return result.toString();
 	}
+
+	public static String toReadableName(String str) {
+		String name = str;
+		name = name.replace("_", " ");
+
+		name = capitalizeWords(name);
+
+		return name;
+	}
+
+	public static String capitalizeWords(String input) {
+		StringBuilder result = new StringBuilder();
+		String[] words = input.split(" ");
+
+		for (String word : words) {
+			if (word.length() > 0) {
+				result.append(Character.toUpperCase(word.charAt(0)))
+						.append(word.substring(1).toLowerCase())
+						.append(" ");
+			}
+		}
+
+		return result.toString().trim();
+	}
 }
