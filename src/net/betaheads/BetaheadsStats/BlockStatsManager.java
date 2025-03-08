@@ -79,7 +79,7 @@ public class BlockStatsManager {
     Repository.updateBatchBlockStatsCounts(stats);
   };
 
-  private static String buildMapKey(String action, String material) {
+  public static String buildMapKey(String action, String material) {
     return action + ":" + material;
   }
 }
