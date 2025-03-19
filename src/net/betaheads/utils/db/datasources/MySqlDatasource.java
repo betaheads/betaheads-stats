@@ -194,10 +194,11 @@ public class MySqlDatasource implements Datasource {
       conn = pool.getConnection();
 
       statement = conn
-          .prepareStatement("INSERT INTO users(name, played_ms) VALUES(?, ?);");
+          .prepareStatement("INSERT INTO users(name, display_name, played_ms) VALUES(?, ?, ?);");
 
       statement.setString(1, user.name);
-      statement.setLong(2, user.played_ms);
+      statement.setString(2, user.display_name);
+      statement.setLong(3, user.played_ms);
 
       return statement.executeUpdate();
     } catch (Exception e) {
@@ -397,6 +398,24 @@ public class MySqlDatasource implements Datasource {
       PluginLogger.error(e.getMessage());
 
       return null;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public void addDisplayNameColumn() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      statement.execute("ALTER TABLE users ADD COLUMN display_name VARCHAR(255) AFTER name;");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
     } finally {
       closeQuery(conn, statement);
     }

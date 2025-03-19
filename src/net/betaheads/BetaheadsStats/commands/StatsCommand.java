@@ -18,7 +18,6 @@ import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.BlockStat;
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.BetaheadsStats.entities.enums.BlockAction;
-import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.Utils;
 
 public class StatsCommand implements CommandExecutor {
@@ -31,7 +30,7 @@ public class StatsCommand implements CommandExecutor {
     int pageSize = 9;
 
     Player player = (Player) sender;
-    String username = player.getName().toLowerCase();
+    String username = player.getName();
 
     User user = UserManager.getUser(username);
 
@@ -71,7 +70,6 @@ public class StatsCommand implements CommandExecutor {
       endIndex = endIndex > statsGrouped.size() ? statsGrouped.size() : endIndex;
 
       statsRows = statsGrouped.subList(startIndex, endIndex);
-      PluginLogger.info(startIndex + " " + (startIndex + pageSize));
 
       for (String[] row : statsRows) {
         String blockName = Utils.toReadableName(row[0]);

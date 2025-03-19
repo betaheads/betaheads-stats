@@ -20,7 +20,7 @@ public class BhBlockListener extends BlockListener {
     Block block = event.getBlock();
     Material type = block.getType();
     Player player = event.getPlayer();
-    String username = player.getName().toLowerCase();
+    String username = player.getName();
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       User user = UserManager.getUser(username);
@@ -34,7 +34,7 @@ public class BhBlockListener extends BlockListener {
     Block block = event.getBlock();
     Material type = block.getType();
     Player player = event.getPlayer();
-    String username = player.getName().toLowerCase();
+    String username = player.getName();
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       User user = UserManager.getUser(username);

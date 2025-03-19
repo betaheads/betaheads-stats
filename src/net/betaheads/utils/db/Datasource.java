@@ -37,4 +37,6 @@ public interface Datasource {
   public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats);
 
   public long saveBlockStat(BlockStatEntity blockStat);
+
+  public void addDisplayNameColumn();
 }

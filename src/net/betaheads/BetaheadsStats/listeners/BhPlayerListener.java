@@ -14,7 +14,7 @@ public class BhPlayerListener extends PlayerListener {
   @Override
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
-    String username = player.getName().toLowerCase();
+    String username = player.getName();
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       UserManager.addUser(username);
@@ -27,7 +27,7 @@ public class BhPlayerListener extends PlayerListener {
   @Override
   public void onPlayerQuit(PlayerQuitEvent event) {
     Player player = event.getPlayer();
-    String username = player.getName().toLowerCase();
+    String username = player.getName();
 
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       User user = UserManager.getUser(username);

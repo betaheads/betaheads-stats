@@ -72,4 +72,8 @@ public class Repository {
   public static long saveBlockStat(BlockStatEntity blockStat) {
     return repo.saveBlockStat(blockStat);
   }
+
+  public static void addDisplayNameColumn() {
+    repo.addDisplayNameColumn();
+  }
 }

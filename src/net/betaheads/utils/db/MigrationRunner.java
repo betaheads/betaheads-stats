@@ -4,12 +4,14 @@ import java.util.ArrayList;
 
 import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.migrations.AddBlockStatsTable;
+import net.betaheads.utils.db.migrations.AddDisplayNameColumn;
 import net.betaheads.utils.db.migrations.AddUserTable;
 
 public class MigrationRunner {
   private static Migration[] migrations = {
       new AddUserTable(),
-      new AddBlockStatsTable()
+      new AddBlockStatsTable(),
+      new AddDisplayNameColumn()
   };
 
   public static void runMigrations() {

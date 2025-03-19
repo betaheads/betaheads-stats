@@ -10,13 +10,17 @@ import net.betaheads.utils.db.entities.UserEntity;
 public class UserManager {
   private static HashMap<String, User> usersMap = new HashMap<String, User>();
 
-  public static void addUser(String username) {
-    User user = new User(username);
+  public static void addUser(String displayName) {
+    String username = displayName.toLowerCase();
+
+    User user = new User(username, displayName);
 
     usersMap.put(username, user);
   }
 
-  public static void removeUser(String username) {
+  public static void removeUser(String displayName) {
+    String username = displayName.toLowerCase();
+
     User user = usersMap.get(username);
 
     user.updateDbData();
@@ -24,7 +28,9 @@ public class UserManager {
     usersMap.remove(username);
   }
 
-  public static User getUser(String username) {
+  public static User getUser(String displayName) {
+    String username = displayName.toLowerCase();
+
     return usersMap.get(username);
   }
 

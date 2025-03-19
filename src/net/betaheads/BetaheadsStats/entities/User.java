@@ -7,8 +7,9 @@ public class User extends UserEntity {
   private long joinTimeMs;
   private long totalWhenJoin;
 
-  public User(String username) {
+  public User(String username, String displayName) {
     this.name = username;
+    this.display_name = displayName;
 
     this.joinTimeMs = System.currentTimeMillis();
 
