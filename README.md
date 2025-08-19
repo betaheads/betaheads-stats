@@ -9,3 +9,8 @@ to build project you need maven installed on your computer and then run:
 mvn clean package
 ```
 
+## Documentation
+
+There is AI-generated documentation. May be helpful for those who want contribute. Or understand this project.
+
+https://deepwiki.com/betaheads/betaheads-stats
