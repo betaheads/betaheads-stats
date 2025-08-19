@@ -1,10 +1,15 @@
 package net.betaheads.BetaheadsStats.listeners;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Sheep;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Entity;
 import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
 import net.betaheads.BetaheadsStats.UserManager;
@@ -35,5 +40,21 @@ public class BhPlayerListener extends PlayerListener {
       BlockStatsManager.removeUserRecords(user.id);
       UserManager.removeUser(username);
     });
+  }
+
+  @Override
+  public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+    Entity entityInteracted = event.getRightClicked();
+
+    if (entityInteracted instanceof Sheep) {
+
+      Sheep sheep = (Sheep) entityInteracted;
+
+      ItemStack handItem = event.getPlayer().getItemInHand();
+
+      if (!sheep.isSheared() && handItem.getType() == Material.SHEARS) {
+        // player sheered sheep!
+      }
+    }
   }
 }
