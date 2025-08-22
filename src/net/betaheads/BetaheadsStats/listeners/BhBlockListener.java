@@ -19,6 +19,11 @@ public class BhBlockListener extends BlockListener {
   public void onBlockBreak(BlockBreakEvent event) {
     Block block = event.getBlock();
     Material type = block.getType();
+
+    if (!isValidMaterial(type)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     String username = player.getName();
 
@@ -33,6 +38,11 @@ public class BhBlockListener extends BlockListener {
   public void onBlockPlace(BlockPlaceEvent event) {
     Block block = event.getBlock();
     Material type = block.getType();
+
+    if (!isValidMaterial(type)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     String username = player.getName();
 
@@ -41,5 +51,9 @@ public class BhBlockListener extends BlockListener {
 
       BlockStatsManager.handleUserAction(user.id, BlockAction.PLACE, type);
     });
+  }
+
+  private Boolean isValidMaterial(Material material) {
+    return material != Material.AIR;
   }
 }
