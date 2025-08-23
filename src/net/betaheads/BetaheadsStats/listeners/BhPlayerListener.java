@@ -10,10 +10,14 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Entity;
+
+import net.betaheads.BetaheadsStats.ActivityStatsManager;
 import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.User;
+import net.betaheads.BetaheadsStats.entities.enums.Activity;
+import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
 
 public class BhPlayerListener extends PlayerListener {
   @Override
@@ -26,6 +30,7 @@ public class BhPlayerListener extends PlayerListener {
       User user = UserManager.getUser(username);
 
       BlockStatsManager.addUserRecords(user.id);
+      ActivityStatsManager.addUserRecords(user.id);
     });
   }
 
@@ -38,6 +43,7 @@ public class BhPlayerListener extends PlayerListener {
       User user = UserManager.getUser(username);
 
       BlockStatsManager.removeUserRecords(user.id);
+      ActivityStatsManager.removeUserRecords(user.id);
       UserManager.removeUser(username);
     });
   }
@@ -53,7 +59,14 @@ public class BhPlayerListener extends PlayerListener {
       ItemStack handItem = event.getPlayer().getItemInHand();
 
       if (!sheep.isSheared() && handItem.getType() == Material.SHEARS) {
-        // player sheered sheep!
+        Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
+          Player player = event.getPlayer();
+          String username = player.getName();
+
+          User user = UserManager.getUser(username);
+
+          ActivityStatsManager.handleUserActivity(user.id, Activity.SHEAR_SHEEP, ActivityType.COMMON);
+        });
       }
     }
   }
