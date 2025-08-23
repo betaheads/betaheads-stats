@@ -3,14 +3,14 @@ package net.betaheads.utils.db.migrations;
 import net.betaheads.utils.db.Migration;
 import net.betaheads.utils.db.Repository;
 
-public class AddBlockStatsTable implements Migration {
+public class AddActivityStatsTable implements Migration {
   @Override
   public String getName() {
-    return "AddBlockStatsTable";
+    return "AddActivityStatsTable";
   }
 
   @Override
   public void run() {
-    Repository.createBlockStatsTable();
+    Repository.createActivityStatsTable();
   }
 }

@@ -3,6 +3,7 @@ package net.betaheads.utils.db;
 import java.util.ArrayList;
 
 import net.betaheads.utils.PluginLogger;
+import net.betaheads.utils.db.migrations.AddActivityStatsTable;
 import net.betaheads.utils.db.migrations.AddBlockStatsTable;
 import net.betaheads.utils.db.migrations.AddDisplayNameColumn;
 import net.betaheads.utils.db.migrations.AddUserTable;
@@ -11,7 +12,8 @@ public class MigrationRunner {
   private static Migration[] migrations = {
       new AddUserTable(),
       new AddBlockStatsTable(),
-      new AddDisplayNameColumn()
+      new AddDisplayNameColumn(),
+      new AddActivityStatsTable()
   };
 
   public static void runMigrations() {

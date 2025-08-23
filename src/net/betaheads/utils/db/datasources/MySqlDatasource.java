@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import net.betaheads.BetaheadsStats.Config;
 import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.Datasource;
+import net.betaheads.utils.db.entities.ActivityStatEntity;
 import net.betaheads.utils.db.entities.BlockStatEntity;
 import net.betaheads.utils.db.entities.UserEntity;
 import net.betaheads.utils.MySQLConnectionPool;
@@ -416,6 +417,141 @@ public class MySqlDatasource implements Datasource {
       statement.execute("ALTER TABLE users ADD COLUMN display_name VARCHAR(255) AFTER name;");
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public void createActivityStatsTable() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      statement.execute(
+          "CREATE TABLE activity_stats (" +
+              "id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT," +
+              "user_id INT NOT NULL," +
+              "activity VARCHAR(255) NOT NULL," +
+              "type VARCHAR(50) NOT NULL," +
+              "count BIGINT NOT NULL DEFAULT 0," +
+              "INDEX IDX_user_id (user_id)" +
+              ");");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public long saveActivityStat(ActivityStatEntity activityStats) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn
+          .prepareStatement("INSERT INTO activity_stats(user_id, activity, type, count) VALUES(?, ?, ?, ?);",
+              PreparedStatement.RETURN_GENERATED_KEYS);
+
+      statement.setLong(1, activityStats.user_id);
+      statement.setString(2, activityStats.activity);
+      statement.setString(3, activityStats.type);
+      statement.setLong(4, activityStats.count);
+
+      int affected = statement.executeUpdate();
+
+      if (affected > 0) {
+        ResultSet rs = statement.getGeneratedKeys();
+        rs.next();
+        return rs.getLong(1);
+      }
+
+      return -1;
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public int[] updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      conn.setAutoCommit(false);
+
+      statement = conn
+          .prepareStatement("UPDATE activity_stats SET count = ? WHERE id = ?;");
+
+      for (ActivityStatEntity stat : activityStats) {
+        statement.setLong(1, stat.count);
+        statement.setLong(2, stat.id);
+
+        statement.addBatch();
+      }
+
+      int[] res = statement.executeBatch();
+
+      conn.commit();
+
+      return res;
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return null;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public ArrayList<ActivityStatEntity> getUserActivityStats(Long userId) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    ArrayList<ActivityStatEntity> result = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.prepareStatement("SELECT id, user_id, activity, type, count FROM activity_stats WHERE user_id = ?;");
+
+      statement.setLong(1, userId);
+
+      ResultSet rs = statement.executeQuery();
+
+      result = new ArrayList<ActivityStatEntity>();
+
+      while (rs.next()) {
+        ActivityStatEntity entity = new ActivityStatEntity();
+
+        entity.id = rs.getLong("id");
+        entity.user_id = rs.getLong("user_id");
+        entity.activity = rs.getString("activity");
+        entity.type = rs.getString("type");
+        entity.count = rs.getLong("count");
+
+        result.add(entity);
+      }
+
+      return result;
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return null;
     } finally {
       closeQuery(conn, statement);
     }

@@ -2,6 +2,7 @@ package net.betaheads.utils.db;
 
 import java.util.ArrayList;
 
+import net.betaheads.utils.db.entities.ActivityStatEntity;
 import net.betaheads.utils.db.entities.BlockStatEntity;
 import net.betaheads.utils.db.entities.UserEntity;
 
@@ -39,4 +40,12 @@ public interface Datasource {
   public long saveBlockStat(BlockStatEntity blockStat);
 
   public void addDisplayNameColumn();
+
+  public void createActivityStatsTable();
+
+  public ArrayList<ActivityStatEntity> getUserActivityStats(Long userId);
+
+  public int[] updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats);
+
+  public long saveActivityStat(ActivityStatEntity activityStats);
 }
