@@ -190,6 +190,8 @@ public class StatsCommand implements CommandExecutor {
     switch (activity) {
       case SHEAR_SHEEP:
         return "Sheared sheeps";
+      case FISH_CAUGHT:
+        return "Fish caught";
 
       default:
         return "ACTIVITY_NOT_FOUND";

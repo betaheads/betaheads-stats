@@ -71,4 +71,16 @@ public class BhPlayerListener extends PlayerListener {
       }
     }
   }
+
+  @Override
+  public void onPlayerFish(PlayerFishEvent event) {
+    if (event.getState() == PlayerFishEvent.State.CAUGHT_FISH) {
+      Player player = event.getPlayer();
+      String username = player.getName();
+
+      User user = UserManager.getUser(username);
+
+      ActivityStatsManager.handleUserActivity(user.id, Activity.FISH_CAUGHT, ActivityType.COMMON);
+    }
+  }
 }

@@ -47,6 +47,7 @@ public class BetaheadsStats extends JavaPlugin {
     pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Lowest, this);
     pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Lowest, this);
     pm.registerEvent(Type.PLAYER_INTERACT_ENTITY, playerListener, Priority.Lowest, this);
+    pm.registerEvent(Type.PLAYER_FISH, playerListener, Priority.Lowest, this);
     pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Lowest, this);
     pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Lowest, this);
 
