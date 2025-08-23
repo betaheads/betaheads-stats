@@ -150,6 +150,11 @@ public class StatsCommand implements CommandExecutor {
 
     HashMap<String, ActivityStat> stats = ActivityStatsManager.getUserActivityStats(user.id);
 
+    if (stats.isEmpty()) {
+      player.sendMessage(ChatColor.GOLD + "You don't have any activity statistics yet.");
+      return true;
+    }
+
     Collection<ActivityStat> activityStatsCollection = stats.values();
     ArrayList<ActivityStat> activityStatsArr = new ArrayList<>();
 
