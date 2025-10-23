@@ -78,9 +78,11 @@ public class BhPlayerListener extends PlayerListener {
       Player player = event.getPlayer();
       String username = player.getName();
 
-      User user = UserManager.getUser(username);
+      Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
+        User user = UserManager.getUser(username);
 
-      ActivityStatsManager.handleUserActivity(user.id, Activity.FISH_CAUGHT, ActivityType.COMMON);
+        ActivityStatsManager.handleUserActivity(user.id, Activity.FISH_CAUGHT, ActivityType.COMMON);
+      });
     }
   }
 }
