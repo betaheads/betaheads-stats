@@ -30,6 +30,8 @@ public class BlockStatsManager {
     return blockStatsMap.get(userId);
   }
 
+  // pure in-memory, safe to call from any thread; new stats are inserted
+  // into the DB later by the save tasks
   public static void handleUserAction(long userId, BlockAction action, Material material) {
     ConcurrentHashMap<String, BlockStat> userStat = blockStatsMap.get(userId);
 
@@ -42,21 +44,20 @@ public class BlockStatsManager {
     BlockStat blockStat = userStat.get(blockStatKey);
 
     if (blockStat == null) {
-      blockStat = new BlockStat();
+      BlockStat newStat = new BlockStat();
 
-      blockStat.user_id = userId;
-      blockStat.action = action.toString();
-      blockStat.block = material.toString();
-      blockStat.count = 1;
+      newStat.id = 0; // not in DB yet
+      newStat.user_id = userId;
+      newStat.action = action.toString();
+      newStat.block = material.toString();
+      newStat.count = 0;
 
-      Long id = blockStat.createDbData();
+      BlockStat existingStat = userStat.putIfAbsent(blockStatKey, newStat);
 
-      blockStat.id = id;
-
-      userStat.put(blockStatKey, blockStat);
-    } else {
-      blockStat.increaseCount();
+      blockStat = existingStat == null ? newStat : existingStat;
     }
+
+    blockStat.increaseCount();
   }
 
   public static void removeUserRecords(long userId) {
@@ -66,7 +67,7 @@ public class BlockStatsManager {
       stats.add(blockStat);
     }
 
-    Repository.updateBatchBlockStatsCounts(stats);
+    Repository.saveBatchBlockStats(stats);
 
     blockStatsMap.remove(userId);
   }
@@ -80,7 +81,7 @@ public class BlockStatsManager {
       }
     }
 
-    Repository.updateBatchBlockStatsCounts(stats);
+    Repository.saveBatchBlockStats(stats);
   };
 
   public static String buildMapKey(String action, String material) {

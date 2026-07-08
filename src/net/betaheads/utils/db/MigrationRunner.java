@@ -6,6 +6,7 @@ import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.migrations.AddActivityStatsTable;
 import net.betaheads.utils.db.migrations.AddBlockStatsTable;
 import net.betaheads.utils.db.migrations.AddDisplayNameColumn;
+import net.betaheads.utils.db.migrations.AddStatsUniqueIndexes;
 import net.betaheads.utils.db.migrations.AddUserLoginColumns;
 import net.betaheads.utils.db.migrations.AddUserTable;
 
@@ -15,7 +16,8 @@ public class MigrationRunner {
       new AddBlockStatsTable(),
       new AddDisplayNameColumn(),
       new AddActivityStatsTable(),
-      new AddUserLoginColumns()
+      new AddUserLoginColumns(),
+      new AddStatsUniqueIndexes()
   };
 
   public static void runMigrations() {

@@ -33,6 +33,8 @@ public class ActivityStatsManager {
     handleUserActivity(userId, activity, type, 1);
   }
 
+  // pure in-memory, safe to call from any thread; new stats are inserted
+  // into the DB later by the save tasks
   public static void handleUserActivity(long userId, Activity activity, ActivityType type, long amount) {
     ConcurrentHashMap<String, ActivityStat> userStat = activityStatsMap.get(userId);
 
@@ -45,21 +47,20 @@ public class ActivityStatsManager {
     ActivityStat activityStat = userStat.get(activityStatKey);
 
     if (activityStat == null) {
-      activityStat = new ActivityStat();
+      ActivityStat newStat = new ActivityStat();
 
-      activityStat.user_id = userId;
-      activityStat.type = type.toString();
-      activityStat.activity = activity.toString();
-      activityStat.count = amount;
+      newStat.id = 0; // not in DB yet
+      newStat.user_id = userId;
+      newStat.type = type.toString();
+      newStat.activity = activity.toString();
+      newStat.count = 0;
 
-      Long id = activityStat.saveToDb();
+      ActivityStat existingStat = userStat.putIfAbsent(activityStatKey, newStat);
 
-      activityStat.id = id;
-
-      userStat.put(activityStatKey, activityStat);
-    } else {
-      activityStat.increaseCount(amount);
+      activityStat = existingStat == null ? newStat : existingStat;
     }
+
+    activityStat.increaseCount(amount);
   }
 
   public static void removeUserRecords(long userId) {
@@ -69,7 +70,7 @@ public class ActivityStatsManager {
       stats.add(activityStat);
     }
 
-    Repository.updateBatchActivityStatsCounts(stats);
+    Repository.saveBatchActivityStats(stats);
 
     activityStatsMap.remove(userId);
   }
@@ -83,7 +84,7 @@ public class ActivityStatsManager {
       }
     }
 
-    Repository.updateBatchActivityStatsCounts(stats);
+    Repository.saveBatchActivityStats(stats);
   };
 
   public static String buildMapKey(String type, String activity) {

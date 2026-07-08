@@ -1,6 +1,5 @@
 package net.betaheads.BetaheadsStats.listeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -11,7 +10,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
-import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.User;
@@ -29,14 +27,7 @@ public class BhBlockListener extends BlockListener {
       return;
     }
 
-    Player player = event.getPlayer();
-    String username = player.getName();
-
-    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
-      User user = UserManager.getUser(username);
-
-      BlockStatsManager.handleUserAction(user.id, BlockAction.BREAK, type);
-    });
+    recordBlockAction(event.getPlayer().getName(), BlockAction.BREAK, type);
   }
 
   @Override
@@ -48,14 +39,18 @@ public class BhBlockListener extends BlockListener {
       return;
     }
 
-    Player player = event.getPlayer();
-    String username = player.getName();
+    recordBlockAction(event.getPlayer().getName(), BlockAction.PLACE, type);
+  }
 
-    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
-      User user = UserManager.getUser(username);
+  // pure in-memory increment, no async task needed
+  private void recordBlockAction(String username, BlockAction action, Material type) {
+    User user = UserManager.getUser(username);
 
-      BlockStatsManager.handleUserAction(user.id, BlockAction.PLACE, type);
-    });
+    if (user == null) { // not loaded yet or already quit
+      return;
+    }
+
+    BlockStatsManager.handleUserAction(user.id, action, type);
   }
 
   @Override
@@ -78,16 +73,15 @@ public class BhBlockListener extends BlockListener {
     recordActivity(player.getName(), Activity.FIRES_STARTED, ActivityType.COMMON, 1);
   }
 
+  // pure in-memory increment, no async task needed
   private void recordActivity(String username, Activity activity, ActivityType type, long amount) {
-    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
-      User user = UserManager.getUser(username);
+    User user = UserManager.getUser(username);
 
-      if (user == null) { // user already quit
-        return;
-      }
+    if (user == null) { // not loaded yet or already quit
+      return;
+    }
 
-      ActivityStatsManager.handleUserActivity(user.id, activity, type, amount);
-    });
+    ActivityStatsManager.handleUserActivity(user.id, activity, type, amount);
   }
 
   private Boolean isValidMaterial(Material material) {

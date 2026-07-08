@@ -186,15 +186,14 @@ public class BhPlayerListener extends PlayerListener {
     }
   }
 
+  // pure in-memory increment, no async task needed
   private void recordActivity(String username, Activity activity, ActivityType type, long amount) {
-    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
-      User user = UserManager.getUser(username);
+    User user = UserManager.getUser(username);
 
-      if (user == null) { // user already quit
-        return;
-      }
+    if (user == null) { // not loaded yet or already quit
+      return;
+    }
 
-      ActivityStatsManager.handleUserActivity(user.id, activity, type, amount);
-    });
+    ActivityStatsManager.handleUserActivity(user.id, activity, type, amount);
   }
 }

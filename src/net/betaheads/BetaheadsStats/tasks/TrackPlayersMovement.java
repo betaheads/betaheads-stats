@@ -1,6 +1,5 @@
 package net.betaheads.BetaheadsStats.tasks;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,14 +9,13 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
-import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.BetaheadsStats.entities.enums.Activity;
 import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
 
-// runs SYNC on the main thread to safely read player locations,
-// then hands the accumulated increments off to an async task
+// runs SYNC on the main thread to safely read player locations;
+// counters are pure in-memory, so increments are applied right away
 public class TrackPlayersMovement implements Runnable {
   public static final long SAMPLE_PERIOD_TICKS = 40L; // 2 seconds
   private static final long SAMPLE_PERIOD_SECONDS = SAMPLE_PERIOD_TICKS / 20;
@@ -30,7 +28,6 @@ public class TrackPlayersMovement implements Runnable {
   public void run() {
     Player[] players = Bukkit.getServer().getOnlinePlayers();
 
-    ArrayList<Increment> increments = new ArrayList<>();
     HashSet<String> onlineNames = new HashSet<>();
 
     for (Player player : players) {
@@ -42,7 +39,7 @@ public class TrackPlayersMovement implements Runnable {
       World world = location.getWorld();
 
       if (world.getEnvironment() == World.Environment.NETHER) {
-        increments.add(new Increment(username, Activity.TIME_IN_NETHER, SAMPLE_PERIOD_SECONDS));
+        recordActivity(username, Activity.TIME_IN_NETHER, SAMPLE_PERIOD_SECONDS);
       }
 
       Sample previous = lastSamples.get(username);
@@ -77,27 +74,22 @@ public class TrackPlayersMovement implements Runnable {
       metersRemainders.put(remainderKey, total - wholeMeters);
 
       if (wholeMeters > 0) {
-        increments.add(new Increment(username, activity, wholeMeters));
+        recordActivity(username, activity, wholeMeters);
       }
     }
 
     cleanupOfflinePlayers(onlineNames);
+  }
 
-    if (increments.isEmpty()) {
+  // pure in-memory increment, no async task needed
+  private void recordActivity(String username, Activity activity, long amount) {
+    User user = UserManager.getUser(username);
+
+    if (user == null) { // not loaded yet or already quit
       return;
     }
 
-    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
-      for (Increment increment : increments) {
-        User user = UserManager.getUser(increment.username);
-
-        if (user == null) { // user already quit
-          continue;
-        }
-
-        ActivityStatsManager.handleUserActivity(user.id, increment.activity, ActivityType.COMMON, increment.amount);
-      }
-    });
+    ActivityStatsManager.handleUserActivity(user.id, activity, ActivityType.COMMON, amount);
   }
 
   private void cleanupOfflinePlayers(HashSet<String> onlineNames) {
@@ -132,15 +124,4 @@ public class TrackPlayersMovement implements Runnable {
     }
   }
 
-  private static class Increment {
-    public final String username;
-    public final Activity activity;
-    public final long amount;
-
-    public Increment(String username, Activity activity, long amount) {
-      this.username = username;
-      this.activity = activity;
-      this.amount = amount;
-    }
-  }
 }

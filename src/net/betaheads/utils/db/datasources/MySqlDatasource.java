@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import net.betaheads.BetaheadsStats.Config;
 import net.betaheads.utils.PluginLogger;
@@ -356,42 +358,107 @@ public class MySqlDatasource implements Datasource {
   }
 
   @Override
-  public long saveBlockStat(BlockStatEntity blockStat) {
+  public void saveBatchBlockStats(ArrayList<BlockStatEntity> blockStats) {
+    ArrayList<BlockStatEntity> statsToInsert = new ArrayList<>();
+    ArrayList<BlockStatEntity> statsToUpdate = new ArrayList<>();
+
+    for (BlockStatEntity stat : blockStats) {
+      if (stat.id == 0) {
+        statsToInsert.add(stat);
+      } else {
+        statsToUpdate.add(stat);
+      }
+    }
+
+    if (!statsToInsert.isEmpty()) {
+      insertBatchBlockStats(statsToInsert);
+      assignBlockStatsIds(statsToInsert);
+    }
+
+    if (!statsToUpdate.isEmpty()) {
+      updateBatchBlockStatsCounts(statsToUpdate);
+    }
+  }
+
+  private void insertBatchBlockStats(ArrayList<BlockStatEntity> blockStats) {
     Connection conn = null;
     PreparedStatement statement = null;
 
     try {
       conn = pool.getConnection();
 
+      conn.setAutoCommit(false);
+
       statement = conn
-          .prepareStatement("INSERT INTO block_stats(user_id, block, action, count) VALUES(?, ?, ?, ?);",
-              PreparedStatement.RETURN_GENERATED_KEYS);
+          .prepareStatement("INSERT INTO block_stats(user_id, block, action, count) VALUES(?, ?, ?, ?)" +
+              " ON DUPLICATE KEY UPDATE count = VALUES(count);");
 
-      statement.setLong(1, blockStat.user_id);
-      statement.setString(2, blockStat.block);
-      statement.setString(3, blockStat.action);
-      statement.setLong(4, blockStat.count);
+      for (BlockStatEntity stat : blockStats) {
+        statement.setLong(1, stat.user_id);
+        statement.setString(2, stat.block);
+        statement.setString(3, stat.action);
+        statement.setLong(4, stat.count);
 
-      int affected = statement.executeUpdate();
-
-      if (affected > 0) {
-        ResultSet rs = statement.getGeneratedKeys();
-        rs.next();
-        return rs.getLong(1);
+        statement.addBatch();
       }
 
-      return -1;
+      statement.executeBatch();
+
+      conn.commit();
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
-
-      return -1;
     } finally {
       closeQuery(conn, statement);
     }
   }
 
-  @Override
-  public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats) {
+  private void assignBlockStatsIds(ArrayList<BlockStatEntity> blockStats) {
+    HashSet<Long> userIds = new HashSet<>();
+
+    for (BlockStatEntity stat : blockStats) {
+      userIds.add(stat.user_id);
+    }
+
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.prepareStatement(
+          "SELECT id, user_id, block, action FROM block_stats WHERE user_id IN (" + buildPlaceholders(userIds.size())
+              + ");");
+
+      int paramIndex = 1;
+      for (Long userId : userIds) {
+        statement.setLong(paramIndex++, userId);
+      }
+
+      ResultSet rs = statement.executeQuery();
+
+      HashMap<String, Long> idsMap = new HashMap<>();
+
+      while (rs.next()) {
+        String key = rs.getLong("user_id") + ":" + rs.getString("action") + ":" + rs.getString("block");
+
+        idsMap.put(key, rs.getLong("id"));
+      }
+
+      for (BlockStatEntity stat : blockStats) {
+        Long id = idsMap.get(stat.user_id + ":" + stat.action + ":" + stat.block);
+
+        if (id != null) {
+          stat.id = id;
+        }
+      }
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  private void updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats) {
     Connection conn = null;
     PreparedStatement statement = null;
 
@@ -410,18 +477,28 @@ public class MySqlDatasource implements Datasource {
         statement.addBatch();
       }
 
-      int[] res = statement.executeBatch();
+      statement.executeBatch();
 
       conn.commit();
-
-      return res;
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
-
-      return null;
     } finally {
       closeQuery(conn, statement);
     }
+  }
+
+  private String buildPlaceholders(int count) {
+    StringBuilder placeholders = new StringBuilder();
+
+    for (int i = 0; i < count; i++) {
+      if (i > 0) {
+        placeholders.append(", ");
+      }
+
+      placeholders.append("?");
+    }
+
+    return placeholders.toString();
   }
 
   @Override
@@ -509,42 +586,107 @@ public class MySqlDatasource implements Datasource {
   }
 
   @Override
-  public long saveActivityStat(ActivityStatEntity activityStats) {
+  public void saveBatchActivityStats(ArrayList<ActivityStatEntity> activityStats) {
+    ArrayList<ActivityStatEntity> statsToInsert = new ArrayList<>();
+    ArrayList<ActivityStatEntity> statsToUpdate = new ArrayList<>();
+
+    for (ActivityStatEntity stat : activityStats) {
+      if (stat.id == 0) {
+        statsToInsert.add(stat);
+      } else {
+        statsToUpdate.add(stat);
+      }
+    }
+
+    if (!statsToInsert.isEmpty()) {
+      insertBatchActivityStats(statsToInsert);
+      assignActivityStatsIds(statsToInsert);
+    }
+
+    if (!statsToUpdate.isEmpty()) {
+      updateBatchActivityStatsCounts(statsToUpdate);
+    }
+  }
+
+  private void insertBatchActivityStats(ArrayList<ActivityStatEntity> activityStats) {
     Connection conn = null;
     PreparedStatement statement = null;
 
     try {
       conn = pool.getConnection();
 
+      conn.setAutoCommit(false);
+
       statement = conn
-          .prepareStatement("INSERT INTO activity_stats(user_id, activity, type, count) VALUES(?, ?, ?, ?);",
-              PreparedStatement.RETURN_GENERATED_KEYS);
+          .prepareStatement("INSERT INTO activity_stats(user_id, activity, type, count) VALUES(?, ?, ?, ?)" +
+              " ON DUPLICATE KEY UPDATE count = VALUES(count);");
 
-      statement.setLong(1, activityStats.user_id);
-      statement.setString(2, activityStats.activity);
-      statement.setString(3, activityStats.type);
-      statement.setLong(4, activityStats.count);
+      for (ActivityStatEntity stat : activityStats) {
+        statement.setLong(1, stat.user_id);
+        statement.setString(2, stat.activity);
+        statement.setString(3, stat.type);
+        statement.setLong(4, stat.count);
 
-      int affected = statement.executeUpdate();
-
-      if (affected > 0) {
-        ResultSet rs = statement.getGeneratedKeys();
-        rs.next();
-        return rs.getLong(1);
+        statement.addBatch();
       }
 
-      return -1;
+      statement.executeBatch();
+
+      conn.commit();
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
-
-      return -1;
     } finally {
       closeQuery(conn, statement);
     }
   }
 
-  @Override
-  public int[] updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats) {
+  private void assignActivityStatsIds(ArrayList<ActivityStatEntity> activityStats) {
+    HashSet<Long> userIds = new HashSet<>();
+
+    for (ActivityStatEntity stat : activityStats) {
+      userIds.add(stat.user_id);
+    }
+
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.prepareStatement(
+          "SELECT id, user_id, activity, type FROM activity_stats WHERE user_id IN ("
+              + buildPlaceholders(userIds.size()) + ");");
+
+      int paramIndex = 1;
+      for (Long userId : userIds) {
+        statement.setLong(paramIndex++, userId);
+      }
+
+      ResultSet rs = statement.executeQuery();
+
+      HashMap<String, Long> idsMap = new HashMap<>();
+
+      while (rs.next()) {
+        String key = rs.getLong("user_id") + ":" + rs.getString("type") + ":" + rs.getString("activity");
+
+        idsMap.put(key, rs.getLong("id"));
+      }
+
+      for (ActivityStatEntity stat : activityStats) {
+        Long id = idsMap.get(stat.user_id + ":" + stat.type + ":" + stat.activity);
+
+        if (id != null) {
+          stat.id = id;
+        }
+      }
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  private void updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats) {
     Connection conn = null;
     PreparedStatement statement = null;
 
@@ -563,15 +705,61 @@ public class MySqlDatasource implements Datasource {
         statement.addBatch();
       }
 
-      int[] res = statement.executeBatch();
+      statement.executeBatch();
 
       conn.commit();
-
-      return res;
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
 
-      return null;
+  @Override
+  public void addStatsUniqueIndexes() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      // merge counts of possible duplicates into the row with the lowest id,
+      // then drop the extra rows, so the unique indexes can be created
+      statement.executeUpdate(
+          "UPDATE activity_stats s" +
+              " JOIN (SELECT MIN(id) AS keep_id, user_id, type, activity, SUM(count) AS total" +
+              "   FROM activity_stats GROUP BY user_id, type, activity HAVING COUNT(*) > 1) d" +
+              " ON s.id = d.keep_id" +
+              " SET s.count = d.total;");
+
+      statement.executeUpdate(
+          "DELETE s FROM activity_stats s" +
+              " JOIN (SELECT MIN(id) AS keep_id, user_id, type, activity" +
+              "   FROM activity_stats GROUP BY user_id, type, activity HAVING COUNT(*) > 1) d" +
+              " ON s.user_id = d.user_id AND s.type = d.type AND s.activity = d.activity AND s.id <> d.keep_id;");
+
+      statement.execute(
+          "ALTER TABLE activity_stats ADD UNIQUE INDEX UQ_user_type_activity (user_id, type, activity(100));");
+
+      statement.executeUpdate(
+          "UPDATE block_stats s" +
+              " JOIN (SELECT MIN(id) AS keep_id, user_id, action, block, SUM(count) AS total" +
+              "   FROM block_stats GROUP BY user_id, action, block HAVING COUNT(*) > 1) d" +
+              " ON s.id = d.keep_id" +
+              " SET s.count = d.total;");
+
+      statement.executeUpdate(
+          "DELETE s FROM block_stats s" +
+              " JOIN (SELECT MIN(id) AS keep_id, user_id, action, block" +
+              "   FROM block_stats GROUP BY user_id, action, block HAVING COUNT(*) > 1) d" +
+              " ON s.user_id = d.user_id AND s.action = d.action AND s.block = d.block AND s.id <> d.keep_id;");
+
+      statement.execute(
+          "ALTER TABLE block_stats ADD UNIQUE INDEX UQ_user_action_block (user_id, action, block(100));");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
     } finally {
       closeQuery(conn, statement);
     }
