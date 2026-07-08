@@ -93,8 +93,6 @@ public class StatsCommand implements CommandExecutor {
       player.sendMessage(
           ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats <page number>' to move through pages.");
 
-      player.sendMessage(ChatColor.GOLD + " ");
-
       player.sendMessage(ChatColor.GOLD + "See activity statistic using '/stats a <page number>' command.");
     } else {
       int startIndex = pageSize * (page - 2);
