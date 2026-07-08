@@ -51,6 +51,14 @@ public class Repository {
     return repo.updateUser(user);
   }
 
+  public static int updateUserLogin(UserEntity user) {
+    return repo.updateUserLogin(user);
+  }
+
+  public static void addUserLoginColumns() {
+    repo.addUserLoginColumns();
+  }
+
   public static void createBlockStatsTable() {
     repo.createBlockStatsTable();
   };

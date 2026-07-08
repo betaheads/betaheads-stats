@@ -160,7 +160,8 @@ public class MySqlDatasource implements Datasource {
 
     try {
       conn = pool.getConnection();
-      statement = conn.prepareStatement("SELECT id, name, played_ms FROM users WHERE name = ?;");
+      statement = conn.prepareStatement(
+          "SELECT id, name, played_ms, first_login_at, last_login_at, login_count FROM users WHERE name = ?;");
 
       statement.setString(1, username);
 
@@ -175,6 +176,9 @@ public class MySqlDatasource implements Datasource {
       user.id = rs.getLong("id");
       user.name = rs.getString("name");
       user.played_ms = rs.getLong("played_ms");
+      user.first_login_at = rs.getTimestamp("first_login_at");
+      user.last_login_at = rs.getTimestamp("last_login_at");
+      user.login_count = rs.getLong("login_count");
 
       return user;
     } catch (Exception e) {
@@ -195,11 +199,15 @@ public class MySqlDatasource implements Datasource {
       conn = pool.getConnection();
 
       statement = conn
-          .prepareStatement("INSERT INTO users(name, display_name, played_ms) VALUES(?, ?, ?);");
+          .prepareStatement(
+              "INSERT INTO users(name, display_name, played_ms, first_login_at, last_login_at, login_count) VALUES(?, ?, ?, ?, ?, ?);");
 
       statement.setString(1, user.name);
       statement.setString(2, user.display_name);
       statement.setLong(3, user.played_ms);
+      statement.setTimestamp(4, user.first_login_at);
+      statement.setTimestamp(5, user.last_login_at);
+      statement.setLong(6, user.login_count);
 
       return statement.executeUpdate();
     } catch (Exception e) {
@@ -264,6 +272,53 @@ public class MySqlDatasource implements Datasource {
       PluginLogger.error(e.getMessage());
 
       return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public int updateUserLogin(UserEntity user) {
+    Connection conn = null;
+    PreparedStatement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn
+          .prepareStatement("UPDATE users SET last_login_at = ?, login_count = ? WHERE name = ?;");
+
+      statement.setTimestamp(1, user.last_login_at);
+      statement.setLong(2, user.login_count);
+      statement.setString(3, user.name);
+
+      return statement.executeUpdate();
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+
+      return -1;
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public void addUserLoginColumns() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      statement.execute(
+          "ALTER TABLE users" +
+              " ADD COLUMN first_login_at DATETIME NULL AFTER played_ms," +
+              " ADD COLUMN last_login_at DATETIME NULL AFTER first_login_at," +
+              " ADD COLUMN login_count BIGINT NOT NULL DEFAULT 0 AFTER last_login_at;");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
     } finally {
       closeQuery(conn, statement);
     }

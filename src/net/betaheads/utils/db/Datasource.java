@@ -31,6 +31,10 @@ public interface Datasource {
 
   public int updateUser(UserEntity user);
 
+  public int updateUserLogin(UserEntity user);
+
+  public void addUserLoginColumns();
+
   public void createBlockStatsTable();
 
   public ArrayList<BlockStatEntity> getUserBlockStats(Long userId);

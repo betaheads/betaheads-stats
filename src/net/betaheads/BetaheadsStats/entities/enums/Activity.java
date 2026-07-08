@@ -3,5 +3,19 @@ package net.betaheads.BetaheadsStats.entities.enums;
 public enum Activity {
   SHEAR_SHEEP,
   FISH_CAUGHT,
-  ZOMBIE_KILL
+  ZOMBIE_KILL,
+  SKELETON_KILL,
+  SPIDER_KILL,
+  CREEPER_KILL,
+  SLIME_KILL,
+  PIG_ZOMBIE_KILL,
+  GHAST_KILL,
+  GIANT_KILL,
+  CHICKEN_KILL,
+  COW_KILL,
+  PIG_KILL,
+  SHEEP_KILL,
+  SQUID_KILL,
+  WOLF_KILL,
+  PLAYER_KILL
 }

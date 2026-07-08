@@ -68,6 +68,9 @@ public class StatsCommand implements CommandExecutor {
       player.sendMessage(ChatColor.GOLD + "Total playtime: " + Utils.formatMillis(user.getTotalPlayedTime()));
       player.sendMessage(
           ChatColor.GOLD + "Current session playtime: " + Utils.formatMillis(user.getCurrentSessionPlayTime()));
+      player.sendMessage(ChatColor.GOLD + "Logins count: " + user.login_count);
+      player.sendMessage(ChatColor.GOLD + "First login: " + Utils.formatDate(user.first_login_at));
+      player.sendMessage(ChatColor.GOLD + "Last login: " + Utils.formatDate(user.last_login_at));
 
       player.sendMessage(ChatColor.GOLD + " ");
       player.sendMessage(ChatColor.GOLD + "See block statistic on next page ->");
@@ -197,6 +200,36 @@ public class StatsCommand implements CommandExecutor {
         return "Sheared sheeps";
       case FISH_CAUGHT:
         return "Fish caught";
+      case ZOMBIE_KILL:
+        return "Zombies killed";
+      case SKELETON_KILL:
+        return "Skeletons killed";
+      case SPIDER_KILL:
+        return "Spiders killed";
+      case CREEPER_KILL:
+        return "Creepers killed";
+      case SLIME_KILL:
+        return "Slimes killed";
+      case PIG_ZOMBIE_KILL:
+        return "Zombie pigmen killed";
+      case GHAST_KILL:
+        return "Ghasts killed";
+      case GIANT_KILL:
+        return "Giants killed";
+      case CHICKEN_KILL:
+        return "Chickens killed";
+      case COW_KILL:
+        return "Cows killed";
+      case PIG_KILL:
+        return "Pigs killed";
+      case SHEEP_KILL:
+        return "Sheeps killed";
+      case SQUID_KILL:
+        return "Squids killed";
+      case WOLF_KILL:
+        return "Wolves killed";
+      case PLAYER_KILL:
+        return "Players killed";
 
       default:
         return "ACTIVITY_NOT_FOUND";

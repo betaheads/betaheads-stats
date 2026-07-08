@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import net.betaheads.BetaheadsStats.commands.StatsCommand;
 import net.betaheads.BetaheadsStats.listeners.BhBlockListener;
+import net.betaheads.BetaheadsStats.listeners.BhEntityListener;
 import net.betaheads.BetaheadsStats.listeners.BhPlayerListener;
 import net.betaheads.BetaheadsStats.tasks.SaveActivityStats;
 import net.betaheads.BetaheadsStats.tasks.SaveBlockStats;
@@ -43,6 +44,7 @@ public class BetaheadsStats extends JavaPlugin {
 
     BhPlayerListener playerListener = new BhPlayerListener();
     BhBlockListener blockListener = new BhBlockListener();
+    BhEntityListener entityListener = new BhEntityListener();
 
     pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Lowest, this);
     pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Lowest, this);
@@ -50,6 +52,7 @@ public class BetaheadsStats extends JavaPlugin {
     pm.registerEvent(Type.PLAYER_FISH, playerListener, Priority.Lowest, this);
     pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Lowest, this);
     pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Lowest, this);
+    pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Lowest, this);
 
     this.getCommand("stats").setExecutor(new StatsCommand());
 

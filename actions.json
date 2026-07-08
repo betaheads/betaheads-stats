@@ -1,0 +1,31 @@
+{
+  "block_actions": [
+    { "name": "BREAK", "title": "Blocks broken" },
+    { "name": "PLACE", "title": "Blocks placed" }
+  ],
+  "activity_types": [
+    { "name": "COMMON", "title": "Common" },
+    { "name": "HOSTILE_MOB_KILL", "title": "Hostile mob kills" },
+    { "name": "PEACEFUL_MOB_KILL", "title": "Peaceful mob kills" },
+    { "name": "PLAYER_KILL", "title": "Player kills" }
+  ],
+  "activities": [
+    { "name": "SHEAR_SHEEP", "type": "COMMON", "title": "Sheared sheeps" },
+    { "name": "FISH_CAUGHT", "type": "COMMON", "title": "Fish caught" },
+    { "name": "ZOMBIE_KILL", "type": "HOSTILE_MOB_KILL", "title": "Zombies killed" },
+    { "name": "SKELETON_KILL", "type": "HOSTILE_MOB_KILL", "title": "Skeletons killed" },
+    { "name": "SPIDER_KILL", "type": "HOSTILE_MOB_KILL", "title": "Spiders killed" },
+    { "name": "CREEPER_KILL", "type": "HOSTILE_MOB_KILL", "title": "Creepers killed" },
+    { "name": "SLIME_KILL", "type": "HOSTILE_MOB_KILL", "title": "Slimes killed" },
+    { "name": "PIG_ZOMBIE_KILL", "type": "HOSTILE_MOB_KILL", "title": "Zombie pigmen killed" },
+    { "name": "GHAST_KILL", "type": "HOSTILE_MOB_KILL", "title": "Ghasts killed" },
+    { "name": "GIANT_KILL", "type": "HOSTILE_MOB_KILL", "title": "Giants killed" },
+    { "name": "CHICKEN_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Chickens killed" },
+    { "name": "COW_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Cows killed" },
+    { "name": "PIG_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Pigs killed" },
+    { "name": "SHEEP_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Sheeps killed" },
+    { "name": "SQUID_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Squids killed" },
+    { "name": "WOLF_KILL", "type": "PEACEFUL_MOB_KILL", "title": "Wolves killed" },
+    { "name": "PLAYER_KILL", "type": "PLAYER_KILL", "title": "Players killed" }
+  ]
+}
