@@ -16,10 +16,12 @@ public class ActivityStatsManager {
     final ArrayList<ActivityStat> userActivityStats = Repository.getUserActivityStats(userId);
     ConcurrentHashMap<String, ActivityStat> userActivityStatsMap = new ConcurrentHashMap<>();
 
-    for (ActivityStat activityStatStat : userActivityStats) {
-      String key = buildMapKey(activityStatStat.type, activityStatStat.activity);
+    if (userActivityStats != null) { // null on DB error, start with empty stats
+      for (ActivityStat activityStatStat : userActivityStats) {
+        String key = buildMapKey(activityStatStat.type, activityStatStat.activity);
 
-      userActivityStatsMap.put(key, activityStatStat);
+        userActivityStatsMap.put(key, activityStatStat);
+      }
     }
 
     activityStatsMap.put(userId, userActivityStatsMap);
@@ -64,9 +66,15 @@ public class ActivityStatsManager {
   }
 
   public static void removeUserRecords(long userId) {
+    ConcurrentHashMap<String, ActivityStat> userStats = activityStatsMap.get(userId);
+
+    if (userStats == null) {
+      return;
+    }
+
     ArrayList<ActivityStatEntity> stats = new ArrayList<>();
 
-    for (ActivityStat activityStat : activityStatsMap.get(userId).values()) {
+    for (ActivityStat activityStat : userStats.values()) {
       stats.add(activityStat);
     }
 

@@ -2,6 +2,7 @@ package net.betaheads.BetaheadsStats.entities;
 
 import java.sql.Timestamp;
 
+import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.UserEntity;
 
@@ -50,6 +51,12 @@ public class User extends UserEntity {
       Repository.saveUser(this);
 
       user = Repository.getUser(this.name);
+
+      if (user == null) { // DB is unreachable or broken, keep defaults to avoid NPEs
+        PluginLogger.error("[User] failed to load user data for '" + this.name + "', check DB errors above.");
+
+        return;
+      }
     } else {
       user.last_login_at = new Timestamp(this.joinTimeMs);
       user.login_count = user.login_count + 1;

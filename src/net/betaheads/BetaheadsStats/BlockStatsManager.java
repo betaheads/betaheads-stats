@@ -17,10 +17,12 @@ public class BlockStatsManager {
     final ArrayList<BlockStat> userBlockStats = Repository.getUserBlockStats(userId);
     ConcurrentHashMap<String, BlockStat> userBlockStatsMap = new ConcurrentHashMap<>();
 
-    for (BlockStat blockStat : userBlockStats) {
-      String key = buildMapKey(blockStat.action, blockStat.block);
+    if (userBlockStats != null) { // null on DB error, start with empty stats
+      for (BlockStat blockStat : userBlockStats) {
+        String key = buildMapKey(blockStat.action, blockStat.block);
 
-      userBlockStatsMap.put(key, blockStat);
+        userBlockStatsMap.put(key, blockStat);
+      }
     }
 
     blockStatsMap.put(userId, userBlockStatsMap);
@@ -61,9 +63,15 @@ public class BlockStatsManager {
   }
 
   public static void removeUserRecords(long userId) {
+    ConcurrentHashMap<String, BlockStat> userStats = blockStatsMap.get(userId);
+
+    if (userStats == null) {
+      return;
+    }
+
     ArrayList<BlockStatEntity> stats = new ArrayList<>();
 
-    for (BlockStat blockStat : blockStatsMap.get(userId).values()) {
+    for (BlockStat blockStat : userStats.values()) {
       stats.add(blockStat);
     }
 

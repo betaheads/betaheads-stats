@@ -59,6 +59,10 @@ public class Repository {
     repo.addUserLoginColumns();
   }
 
+  public static void addLastSeenAtColumn() {
+    repo.addLastSeenAtColumn();
+  }
+
   public static void createBlockStatsTable() {
     repo.createBlockStatsTable();
   };

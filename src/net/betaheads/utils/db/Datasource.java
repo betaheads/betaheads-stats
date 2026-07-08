@@ -35,6 +35,8 @@ public interface Datasource {
 
   public void addUserLoginColumns();
 
+  public void addLastSeenAtColumn();
+
   public void createBlockStatsTable();
 
   public ArrayList<BlockStatEntity> getUserBlockStats(Long userId);

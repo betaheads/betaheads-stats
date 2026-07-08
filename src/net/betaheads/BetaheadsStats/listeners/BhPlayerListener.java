@@ -54,6 +54,10 @@ public class BhPlayerListener extends PlayerListener {
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       User user = UserManager.getUser(username);
 
+      if (user == null) { // join task did not manage to load the user
+        return;
+      }
+
       BlockStatsManager.removeUserRecords(user.id);
       ActivityStatsManager.removeUserRecords(user.id);
       UserManager.removeUser(username);

@@ -322,8 +322,32 @@ public class MySqlDatasource implements Datasource {
           "ALTER TABLE users" +
               " ADD COLUMN first_login_at DATETIME NULL AFTER played_ms," +
               " ADD COLUMN last_login_at DATETIME NULL AFTER first_login_at," +
-              " ADD COLUMN last_seen_at DATETIME NULL AFTER last_login_at," +
-              " ADD COLUMN login_count BIGINT NOT NULL DEFAULT 0 AFTER last_seen_at;");
+              " ADD COLUMN login_count BIGINT NOT NULL DEFAULT 0 AFTER last_login_at;");
+    } catch (Exception e) {
+      PluginLogger.error(e.getMessage());
+    } finally {
+      closeQuery(conn, statement);
+    }
+  }
+
+  @Override
+  public void addLastSeenAtColumn() {
+    Connection conn = null;
+    Statement statement = null;
+
+    try {
+      conn = pool.getConnection();
+
+      statement = conn.createStatement();
+
+      // the column may already exist on DBs migrated by an early build
+      ResultSet rs = statement.executeQuery("SHOW COLUMNS FROM users LIKE 'last_seen_at';");
+
+      if (rs.next()) {
+        return;
+      }
+
+      statement.execute("ALTER TABLE users ADD COLUMN last_seen_at DATETIME NULL AFTER last_login_at;");
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
     } finally {

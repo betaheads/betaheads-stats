@@ -24,6 +24,10 @@ public class UserManager {
 
     User user = usersMap.get(username);
 
+    if (user == null) {
+      return;
+    }
+
     user.updateDbData();
 
     usersMap.remove(username);
