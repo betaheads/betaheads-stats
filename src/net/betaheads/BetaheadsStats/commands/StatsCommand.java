@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
 import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
+import net.betaheads.BetaheadsStats.Config;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.ActivityStat;
 import net.betaheads.BetaheadsStats.entities.BlockStat;
@@ -80,7 +81,7 @@ public class StatsCommand implements CommandExecutor {
     List<String[]> statsRows = null;
 
     if (page == 1) {
-      player.sendMessage(ChatColor.GOLD + "--- Betaheads stats ---");
+      player.sendMessage(ChatColor.GOLD + "--- " + Config.getStatsTitle() + " ---");
       player.sendMessage(ChatColor.GOLD + "Total playtime: " + Utils.formatMillis(user.getTotalPlayedTime()));
       player.sendMessage(
           ChatColor.GOLD + "Current session playtime: " + Utils.formatMillis(user.getCurrentSessionPlayTime()));
@@ -170,9 +171,9 @@ public class StatsCommand implements CommandExecutor {
       return;
     }
 
-    ArrayList<String> lines = groupByActivityType(stats);
+    ArrayList<ArrayList<String>> statsPages = groupByActivityType(stats, pageSize);
 
-    int pages = lines.size() / pageSize + ((lines.size() % pageSize == 0) ? 0 : 1);
+    int pages = statsPages.size();
 
     int page = 1;
     try {
@@ -183,13 +184,7 @@ public class StatsCommand implements CommandExecutor {
     page = pages < page ? pages : page;
     page = page < 1 ? 1 : page;
 
-    int startIndex = pageSize * (page - 1);
-    int endIndex = startIndex + pageSize;
-    endIndex = endIndex > lines.size() ? lines.size() : endIndex;
-
-    List<String> statsRows = lines.subList(startIndex, endIndex);
-
-    for (String row : statsRows) {
+    for (String row : statsPages.get(page - 1)) {
       player.sendMessage(row);
     }
 
@@ -197,15 +192,18 @@ public class StatsCommand implements CommandExecutor {
         ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats a <page number>' to move through pages.");
   }
 
-  private ArrayList<String> groupByActivityType(ConcurrentHashMap<String, ActivityStat> stats) {
+  private ArrayList<ArrayList<String>> groupByActivityType(ConcurrentHashMap<String, ActivityStat> stats,
+      int pageSize) {
     ActivityType[] typesOrder = {
         ActivityType.COMMON,
         ActivityType.HOSTILE_MOB_KILL,
         ActivityType.PEACEFUL_MOB_KILL,
-        ActivityType.PLAYER_KILL
+        ActivityType.PLAYER_KILL,
+        ActivityType.DEATH
     };
 
-    ArrayList<String> lines = new ArrayList<>();
+    ArrayList<ArrayList<String>> pages = new ArrayList<>();
+    ArrayList<String> currentPage = new ArrayList<>();
 
     for (ActivityType type : typesOrder) {
       ArrayList<String[]> rows = new ArrayList<>();
@@ -224,14 +222,29 @@ public class StatsCommand implements CommandExecutor {
 
       rows.sort((a, b) -> a[0].compareTo(b[0]));
 
-      lines.add(ChatColor.GOLD + "--- " + getReadableActivityTypeString(type) + " ---");
+      // a category header must have at least one row under it on the same page
+      if (currentPage.size() + 1 >= pageSize) {
+        pages.add(currentPage);
+        currentPage = new ArrayList<>();
+      }
+
+      currentPage.add(ChatColor.GOLD + "--- " + getReadableActivityTypeString(type) + " ---");
 
       for (String[] row : rows) {
-        lines.add(ChatColor.GOLD + row[0] + ": " + ChatColor.DARK_GREEN + row[1]);
+        if (currentPage.size() == pageSize) {
+          pages.add(currentPage);
+          currentPage = new ArrayList<>();
+        }
+
+        currentPage.add(ChatColor.GOLD + row[0] + ": " + ChatColor.DARK_GREEN + row[1]);
       }
     }
 
-    return lines;
+    if (!currentPage.isEmpty()) {
+      pages.add(currentPage);
+    }
+
+    return pages;
   }
 
   private String getReadableActivityTypeString(ActivityType type) {
@@ -244,6 +257,8 @@ public class StatsCommand implements CommandExecutor {
         return "Peaceful mob kills";
       case PLAYER_KILL:
         return "Player kills";
+      case DEATH:
+        return "Deaths";
 
       default:
         return "TYPE_NOT_FOUND";
@@ -286,6 +301,78 @@ public class StatsCommand implements CommandExecutor {
         return "Wolves killed";
       case PLAYER_KILL:
         return "Players killed";
+      case DEATH_FALL:
+        return "From falling";
+      case DEATH_DROWNING:
+        return "From drowning";
+      case DEATH_LAVA:
+        return "In lava";
+      case DEATH_FIRE:
+        return "From fire";
+      case DEATH_EXPLOSION:
+        return "From explosions";
+      case DEATH_MOB:
+        return "From mobs";
+      case DEATH_PLAYER:
+        return "From players";
+      case DEATH_VOID:
+        return "In the void";
+      case DEATH_SUFFOCATION:
+        return "From suffocation";
+      case DEATH_LIGHTNING:
+        return "From lightning";
+      case DEATH_CACTUS:
+        return "From cactus";
+      case DEATH_OTHER:
+        return "Other";
+      case DAMAGE_DEALT:
+        return "Damage dealt";
+      case DAMAGE_TAKEN:
+        return "Damage taken";
+      case ARROW_HITS:
+        return "Arrow hits";
+      case ITEMS_PICKED_UP:
+        return "Items picked up";
+      case ITEMS_DROPPED:
+        return "Items dropped";
+      case WATER_BUCKET_FILLED:
+        return "Water buckets filled";
+      case LAVA_BUCKET_FILLED:
+        return "Lava buckets filled";
+      case WATER_BUCKET_EMPTIED:
+        return "Water buckets emptied";
+      case LAVA_BUCKET_EMPTIED:
+        return "Lava buckets emptied";
+      case NIGHTS_SLEPT:
+        return "Nights slept";
+      case NETHER_PORTAL_USED:
+        return "Nether portals used";
+      case EGGS_THROWN:
+        return "Eggs thrown";
+      case CHICKENS_HATCHED:
+        return "Chickens hatched";
+      case SIGNS_WRITTEN:
+        return "Signs written";
+      case PAINTINGS_PLACED:
+        return "Paintings placed";
+      case FIRES_STARTED:
+        return "Fires started";
+      case CHAT_MESSAGES:
+        return "Chat messages sent";
+      case COMMANDS_USED:
+        return "Commands used";
+      case COW_MILKED:
+        return "Cows milked";
+      case SHEEP_DYED:
+        return "Sheeps dyed";
+      case WOLF_TAMED:
+        return "Wolves tamed";
+      case DISTANCE_WALKED:
+        return "Distance walked (m)";
+      case DISTANCE_BY_VEHICLE:
+        return "Distance by vehicle (m)";
+      case TIME_IN_NETHER:
+        return "Time in Nether (sec)";
 
       default:
         return "ACTIVITY_NOT_FOUND";

@@ -18,9 +18,11 @@ import org.bukkit.entity.Squid;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageByProjectileEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityListener;
+import org.bukkit.event.painting.PaintingPlaceEvent;
 
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
 import net.betaheads.BetaheadsStats.BetaheadsStats;
@@ -35,6 +37,12 @@ public class BhEntityListener extends EntityListener {
     Entity entity = event.getEntity();
 
     EntityDamageEvent lastDamage = entity.getLastDamageCause();
+
+    if (entity instanceof Player) {
+      Player victim = (Player) entity;
+
+      recordActivity(victim.getName(), getDeathActivity(lastDamage), ActivityType.DEATH, 1);
+    }
 
     if (!(lastDamage instanceof EntityDamageByEntityEvent)) {
       return;
@@ -55,13 +63,109 @@ public class BhEntityListener extends EntityListener {
     ActivityType type = getKillActivityType(activity);
 
     Player killer = (Player) damager;
-    String username = killer.getName();
 
+    recordActivity(killer.getName(), activity, type, 1);
+  }
+
+  @Override
+  public void onEntityDamage(EntityDamageEvent event) {
+    if (event.isCancelled()) {
+      return;
+    }
+
+    Entity entity = event.getEntity();
+    long damage = event.getDamage();
+
+    String victimName = entity instanceof Player ? ((Player) entity).getName() : null;
+
+    String damagerName = null;
+    boolean isArrowHit = false;
+
+    if (event instanceof EntityDamageByEntityEvent) {
+      Entity damager = ((EntityDamageByEntityEvent) event).getDamager();
+
+      if (damager instanceof Player) {
+        damagerName = ((Player) damager).getName();
+        isArrowHit = event instanceof EntityDamageByProjectileEvent;
+      }
+    }
+
+    if (victimName == null && damagerName == null) { // no players involved, don't even schedule a task
+      return;
+    }
+
+    if (victimName != null) {
+      recordActivity(victimName, Activity.DAMAGE_TAKEN, ActivityType.COMMON, damage);
+    }
+
+    if (damagerName != null) {
+      recordActivity(damagerName, Activity.DAMAGE_DEALT, ActivityType.COMMON, damage);
+
+      if (isArrowHit) {
+        recordActivity(damagerName, Activity.ARROW_HITS, ActivityType.COMMON, 1);
+      }
+    }
+  }
+
+  @Override
+  public void onPaintingPlace(PaintingPlaceEvent event) {
+    Player player = event.getPlayer();
+
+    if (player == null) {
+      return;
+    }
+
+    recordActivity(player.getName(), Activity.PAINTINGS_PLACED, ActivityType.COMMON, 1);
+  }
+
+  private void recordActivity(String username, Activity activity, ActivityType type, long amount) {
     Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
       User user = UserManager.getUser(username);
 
-      ActivityStatsManager.handleUserActivity(user.id, activity, type);
+      if (user == null) { // user already quit
+        return;
+      }
+
+      ActivityStatsManager.handleUserActivity(user.id, activity, type, amount);
     });
+  }
+
+  private Activity getDeathActivity(EntityDamageEvent lastDamage) {
+    if (lastDamage == null) {
+      return Activity.DEATH_OTHER;
+    }
+
+    switch (lastDamage.getCause()) {
+      case FALL:
+        return Activity.DEATH_FALL;
+      case DROWNING:
+        return Activity.DEATH_DROWNING;
+      case LAVA:
+        return Activity.DEATH_LAVA;
+      case FIRE:
+      case FIRE_TICK:
+        return Activity.DEATH_FIRE;
+      case BLOCK_EXPLOSION:
+      case ENTITY_EXPLOSION:
+        return Activity.DEATH_EXPLOSION;
+      case VOID:
+        return Activity.DEATH_VOID;
+      case SUFFOCATION:
+        return Activity.DEATH_SUFFOCATION;
+      case LIGHTNING:
+        return Activity.DEATH_LIGHTNING;
+      case CONTACT:
+        return Activity.DEATH_CACTUS;
+
+      default:
+        if (lastDamage instanceof EntityDamageByEntityEvent) {
+          Entity damager = ((EntityDamageByEntityEvent) lastDamage).getDamager();
+
+          return damager instanceof Player ? Activity.DEATH_PLAYER : Activity.DEATH_MOB;
+        }
+
+        return Activity.DEATH_OTHER;
+    }
   }
 
   private Activity getKillActivity(Entity entity) {

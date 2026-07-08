@@ -27,6 +27,7 @@ public class Config {
     getMysqlDb();
     getMysqlNewAuthMethod();
     writeMySqlNewAuthInfo();
+    getStatsTitle();
 
     configuration.save();
   }
@@ -49,6 +50,10 @@ public class Config {
 
   public static String getMysqlDb() {
     return configuration.getString("mysql.database", "betaheadstats");
+  }
+
+  public static String getStatsTitle() {
+    return configuration.getString("stats.title", "Betaheads stats");
   }
 
   public static Boolean getMysqlNewAuthMethod() {

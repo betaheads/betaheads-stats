@@ -32,6 +32,7 @@ public class User extends UserEntity {
 
   public void updateDbData() {
     this.played_ms = getTotalPlayedTime();
+    this.last_seen_at = new Timestamp(System.currentTimeMillis());
 
     Repository.updateUser(this);
   }
@@ -43,6 +44,7 @@ public class User extends UserEntity {
       this.played_ms = 0;
       this.first_login_at = new Timestamp(this.joinTimeMs);
       this.last_login_at = new Timestamp(this.joinTimeMs);
+      this.last_seen_at = new Timestamp(this.joinTimeMs);
       this.login_count = 1;
 
       Repository.saveUser(this);
@@ -60,6 +62,7 @@ public class User extends UserEntity {
     this.played_ms = user.played_ms;
     this.first_login_at = user.first_login_at;
     this.last_login_at = user.last_login_at;
+    this.last_seen_at = user.last_seen_at;
     this.login_count = user.login_count;
 
     this.totalWhenJoin = this.played_ms;

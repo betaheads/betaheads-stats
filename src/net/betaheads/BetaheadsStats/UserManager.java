@@ -1,5 +1,6 @@
 package net.betaheads.BetaheadsStats;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,8 +38,11 @@ public class UserManager {
   public static void saveAllUsersData() {
     ArrayList<UserEntity> userEntities = new ArrayList<>();
 
+    Timestamp now = new Timestamp(System.currentTimeMillis());
+
     for (User user : usersMap.values()) {
       user.played_ms = user.getTotalPlayedTime();
+      user.last_seen_at = now; // user is online right now
 
       userEntities.add(user);
     }

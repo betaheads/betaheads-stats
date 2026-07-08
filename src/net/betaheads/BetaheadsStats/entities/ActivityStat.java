@@ -16,7 +16,11 @@ public class ActivityStat extends ActivityStatEntity {
   }
 
   public void increaseCount() {
-    this.count++;
+    increaseCount(1);
+  }
+
+  public void increaseCount(long amount) {
+    this.count += amount;
   }
 
   public long saveToDb() {

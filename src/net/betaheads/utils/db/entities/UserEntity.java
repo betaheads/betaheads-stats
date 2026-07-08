@@ -9,5 +9,6 @@ public class UserEntity {
   public long played_ms;
   public Timestamp first_login_at;
   public Timestamp last_login_at;
+  public Timestamp last_seen_at;
   public long login_count;
 }

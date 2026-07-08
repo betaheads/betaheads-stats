@@ -33,6 +33,10 @@ public class BlockStatsManager {
   public static void handleUserAction(long userId, BlockAction action, Material material) {
     ConcurrentHashMap<String, BlockStat> userStat = blockStatsMap.get(userId);
 
+    if (userStat == null) { // user already quit
+      return;
+    }
+
     String blockStatKey = buildMapKey(action.toString(), material.toString());
 
     BlockStat blockStat = userStat.get(blockStatKey);

@@ -161,7 +161,7 @@ public class MySqlDatasource implements Datasource {
     try {
       conn = pool.getConnection();
       statement = conn.prepareStatement(
-          "SELECT id, name, played_ms, first_login_at, last_login_at, login_count FROM users WHERE name = ?;");
+          "SELECT id, name, played_ms, first_login_at, last_login_at, last_seen_at, login_count FROM users WHERE name = ?;");
 
       statement.setString(1, username);
 
@@ -178,6 +178,7 @@ public class MySqlDatasource implements Datasource {
       user.played_ms = rs.getLong("played_ms");
       user.first_login_at = rs.getTimestamp("first_login_at");
       user.last_login_at = rs.getTimestamp("last_login_at");
+      user.last_seen_at = rs.getTimestamp("last_seen_at");
       user.login_count = rs.getLong("login_count");
 
       return user;
@@ -200,14 +201,15 @@ public class MySqlDatasource implements Datasource {
 
       statement = conn
           .prepareStatement(
-              "INSERT INTO users(name, display_name, played_ms, first_login_at, last_login_at, login_count) VALUES(?, ?, ?, ?, ?, ?);");
+              "INSERT INTO users(name, display_name, played_ms, first_login_at, last_login_at, last_seen_at, login_count) VALUES(?, ?, ?, ?, ?, ?, ?);");
 
       statement.setString(1, user.name);
       statement.setString(2, user.display_name);
       statement.setLong(3, user.played_ms);
       statement.setTimestamp(4, user.first_login_at);
       statement.setTimestamp(5, user.last_login_at);
-      statement.setLong(6, user.login_count);
+      statement.setTimestamp(6, user.last_seen_at);
+      statement.setLong(7, user.login_count);
 
       return statement.executeUpdate();
     } catch (Exception e) {
@@ -230,11 +232,12 @@ public class MySqlDatasource implements Datasource {
       conn.setAutoCommit(false);
 
       statement = conn
-          .prepareStatement("UPDATE users SET played_ms = ? WHERE name = ?;");
+          .prepareStatement("UPDATE users SET played_ms = ?, last_seen_at = ? WHERE name = ?;");
 
       for (UserEntity user : users) {
         statement.setLong(1, user.played_ms);
-        statement.setString(2, user.name);
+        statement.setTimestamp(2, user.last_seen_at);
+        statement.setString(3, user.name);
 
         statement.addBatch();
       }
@@ -262,10 +265,11 @@ public class MySqlDatasource implements Datasource {
       conn = pool.getConnection();
 
       statement = conn
-          .prepareStatement("UPDATE users SET played_ms = ? WHERE name = ?;");
+          .prepareStatement("UPDATE users SET played_ms = ?, last_seen_at = ? WHERE name = ?;");
 
       statement.setLong(1, user.played_ms);
-      statement.setString(2, user.name);
+      statement.setTimestamp(2, user.last_seen_at);
+      statement.setString(3, user.name);
 
       return statement.executeUpdate();
     } catch (Exception e) {
@@ -316,7 +320,8 @@ public class MySqlDatasource implements Datasource {
           "ALTER TABLE users" +
               " ADD COLUMN first_login_at DATETIME NULL AFTER played_ms," +
               " ADD COLUMN last_login_at DATETIME NULL AFTER first_login_at," +
-              " ADD COLUMN login_count BIGINT NOT NULL DEFAULT 0 AFTER last_login_at;");
+              " ADD COLUMN last_seen_at DATETIME NULL AFTER last_login_at," +
+              " ADD COLUMN login_count BIGINT NOT NULL DEFAULT 0 AFTER last_seen_at;");
     } catch (Exception e) {
       PluginLogger.error(e.getMessage());
     } finally {

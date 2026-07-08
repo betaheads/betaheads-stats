@@ -30,7 +30,15 @@ public class ActivityStatsManager {
   }
 
   public static void handleUserActivity(long userId, Activity activity, ActivityType type) {
+    handleUserActivity(userId, activity, type, 1);
+  }
+
+  public static void handleUserActivity(long userId, Activity activity, ActivityType type, long amount) {
     ConcurrentHashMap<String, ActivityStat> userStat = activityStatsMap.get(userId);
+
+    if (userStat == null) { // user already quit
+      return;
+    }
 
     String activityStatKey = buildMapKey(type.toString(), activity.toString());
 
@@ -42,7 +50,7 @@ public class ActivityStatsManager {
       activityStat.user_id = userId;
       activityStat.type = type.toString();
       activityStat.activity = activity.toString();
-      activityStat.count = 1;
+      activityStat.count = amount;
 
       Long id = activityStat.saveToDb();
 
@@ -50,7 +58,7 @@ public class ActivityStatsManager {
 
       userStat.put(activityStatKey, activityStat);
     } else {
-      activityStat.increaseCount();
+      activityStat.increaseCount(amount);
     }
   }
 
