@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,12 +15,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
+import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.ActivityStat;
 import net.betaheads.BetaheadsStats.entities.BlockStat;
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.BetaheadsStats.entities.enums.Activity;
+import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
 import net.betaheads.BetaheadsStats.entities.enums.BlockAction;
 import net.betaheads.utils.Utils;
 
@@ -30,19 +33,31 @@ public class StatsCommand implements CommandExecutor {
       return true;
     }
 
+    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
+      String firstArg = "";
+      try {
+        firstArg = args[0];
+      } catch (Exception e) {
+      }
+
+      if (firstArg.equalsIgnoreCase("a")) {
+        showActivityStats(sender, args);
+      } else {
+        showBlockStats(sender, args);
+      }
+    });
+
+    return true;
+  }
+
+  private void showBlockStats(CommandSender sender, String[] args) {
+    int pageSize = 9;
+
     int page = 1;
-    String firstArg = "";
     try {
-      firstArg = args[0];
       page = Integer.parseInt(args[0]);
     } catch (Exception e) {
     }
-
-    if (firstArg.equalsIgnoreCase("a")) {
-      return showActivityStats(sender, cmd, label, args);
-    }
-
-    int pageSize = 9;
 
     Player player = (Player) sender;
     String username = player.getName();
@@ -60,6 +75,7 @@ public class StatsCommand implements CommandExecutor {
     pages++; // first page for total playtime
 
     page = pages < page ? pages : page;
+    page = page < 1 ? 1 : page;
 
     List<String[]> statsRows = null;
 
@@ -98,8 +114,6 @@ public class StatsCommand implements CommandExecutor {
 
       player.sendMessage(ChatColor.GOLD + "Page " + page + "/" + pages);
     }
-
-    return true;
   }
 
   private ArrayList<String[]> groupByBlock(HashMap<String, BlockStat> stats) {
@@ -143,7 +157,7 @@ public class StatsCommand implements CommandExecutor {
     return max;
   }
 
-  private boolean showActivityStats(CommandSender sender, Command cmd, String label, String[] args) {
+  private void showActivityStats(CommandSender sender, String[] args) {
     int pageSize = 9;
 
     Player player = (Player) sender;
@@ -155,43 +169,87 @@ public class StatsCommand implements CommandExecutor {
 
     if (stats.isEmpty()) {
       player.sendMessage(ChatColor.GOLD + "You don't have any activity statistics yet.");
-      return true;
+      return;
     }
 
-    Collection<ActivityStat> activityStatsCollection = stats.values();
-    ArrayList<ActivityStat> activityStatsArr = new ArrayList<>();
+    ArrayList<String> lines = groupByActivityType(stats);
 
-    for (ActivityStat activityStat : activityStatsCollection) {
-      activityStatsArr.add(activityStat);
-    }
-
-    int pages = activityStatsArr.size() / pageSize + ((activityStatsArr.size() % pageSize == 0) ? 0 : 1);
+    int pages = lines.size() / pageSize + ((lines.size() % pageSize == 0) ? 0 : 1);
 
     int page = 1;
     try {
-      page = Integer.parseInt(args[0]);
+      page = Integer.parseInt(args[1]);
     } catch (Exception e) {
     }
 
     page = pages < page ? pages : page;
-
-    List<ActivityStat> statsRows = null;
+    page = page < 1 ? 1 : page;
 
     int startIndex = pageSize * (page - 1);
     int endIndex = startIndex + pageSize;
-    endIndex = endIndex > activityStatsArr.size() ? activityStatsArr.size() : endIndex;
+    endIndex = endIndex > lines.size() ? lines.size() : endIndex;
 
-    statsRows = activityStatsArr.subList(startIndex, endIndex);
+    List<String> statsRows = lines.subList(startIndex, endIndex);
 
-    for (ActivityStat row : statsRows) {
-      String activityString = this.getReadableActivityString(Activity.valueOf(row.activity));
-
-      player.sendMessage(ChatColor.GOLD + activityString + ": " + ChatColor.DARK_GREEN + row.count);
+    for (String row : statsRows) {
+      player.sendMessage(row);
     }
 
-    player.sendMessage(ChatColor.GOLD + "Page " + page + "/" + pages);
+    player.sendMessage(
+        ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats a <page number>' to move through pages.");
+  }
 
-    return true;
+  private ArrayList<String> groupByActivityType(HashMap<String, ActivityStat> stats) {
+    ActivityType[] typesOrder = {
+        ActivityType.COMMON,
+        ActivityType.HOSTILE_MOB_KILL,
+        ActivityType.PEACEFUL_MOB_KILL,
+        ActivityType.PLAYER_KILL
+    };
+
+    ArrayList<String> lines = new ArrayList<>();
+
+    for (ActivityType type : typesOrder) {
+      ArrayList<String[]> rows = new ArrayList<>();
+
+      for (ActivityStat stat : stats.values()) {
+        if (stat.type.equals(type.toString())) {
+          String activityString = getReadableActivityString(Activity.valueOf(stat.activity));
+
+          rows.add(new String[] { activityString, Long.toString(stat.count) });
+        }
+      }
+
+      if (rows.isEmpty()) {
+        continue;
+      }
+
+      rows.sort((a, b) -> a[0].compareTo(b[0]));
+
+      lines.add(ChatColor.GOLD + "--- " + getReadableActivityTypeString(type) + " ---");
+
+      for (String[] row : rows) {
+        lines.add(ChatColor.GOLD + row[0] + ": " + ChatColor.DARK_GREEN + row[1]);
+      }
+    }
+
+    return lines;
+  }
+
+  private String getReadableActivityTypeString(ActivityType type) {
+    switch (type) {
+      case COMMON:
+        return "Common actions";
+      case HOSTILE_MOB_KILL:
+        return "Hostile mob kills";
+      case PEACEFUL_MOB_KILL:
+        return "Peaceful mob kills";
+      case PLAYER_KILL:
+        return "Player kills";
+
+      default:
+        return "TYPE_NOT_FOUND";
+    }
   }
 
   private String getReadableActivityString(Activity activity) {
