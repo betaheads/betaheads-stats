@@ -3,7 +3,7 @@ package net.betaheads.BetaheadsStats.commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -64,7 +64,7 @@ public class StatsCommand implements CommandExecutor {
 
     User user = UserManager.getUser(username);
 
-    HashMap<String, BlockStat> stats = BlockStatsManager.getUserBlockStats(user.id);
+    ConcurrentHashMap<String, BlockStat> stats = BlockStatsManager.getUserBlockStats(user.id);
 
     int colWidth = getMaxCountLength(stats.values());
 
@@ -116,7 +116,7 @@ public class StatsCommand implements CommandExecutor {
     }
   }
 
-  private ArrayList<String[]> groupByBlock(HashMap<String, BlockStat> stats) {
+  private ArrayList<String[]> groupByBlock(ConcurrentHashMap<String, BlockStat> stats) {
     HashSet<String> blocksNames = new HashSet<>();
 
     for (BlockStat stat : stats.values()) {
@@ -165,7 +165,7 @@ public class StatsCommand implements CommandExecutor {
 
     User user = UserManager.getUser(username);
 
-    HashMap<String, ActivityStat> stats = ActivityStatsManager.getUserActivityStats(user.id);
+    ConcurrentHashMap<String, ActivityStat> stats = ActivityStatsManager.getUserActivityStats(user.id);
 
     if (stats.isEmpty()) {
       player.sendMessage(ChatColor.GOLD + "You don't have any activity statistics yet.");
@@ -199,7 +199,7 @@ public class StatsCommand implements CommandExecutor {
         ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats a <page number>' to move through pages.");
   }
 
-  private ArrayList<String> groupByActivityType(HashMap<String, ActivityStat> stats) {
+  private ArrayList<String> groupByActivityType(ConcurrentHashMap<String, ActivityStat> stats) {
     ActivityType[] typesOrder = {
         ActivityType.COMMON,
         ActivityType.HOSTILE_MOB_KILL,

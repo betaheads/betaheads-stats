@@ -1,14 +1,14 @@
 package net.betaheads.BetaheadsStats;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.UserEntity;
 
 public class UserManager {
-  private static HashMap<String, User> usersMap = new HashMap<String, User>();
+  private static ConcurrentHashMap<String, User> usersMap = new ConcurrentHashMap<String, User>();
 
   public static void addUser(String displayName) {
     String username = displayName.toLowerCase();

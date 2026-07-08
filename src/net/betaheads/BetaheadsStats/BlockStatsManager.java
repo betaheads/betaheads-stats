@@ -1,7 +1,7 @@
 package net.betaheads.BetaheadsStats;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Material;
 
@@ -11,11 +11,11 @@ import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.BlockStatEntity;
 
 public class BlockStatsManager {
-  private final static HashMap<Long, HashMap<String, BlockStat>> blockStatsMap = new HashMap<>();
+  private final static ConcurrentHashMap<Long, ConcurrentHashMap<String, BlockStat>> blockStatsMap = new ConcurrentHashMap<>();
 
   public static void addUserRecords(Long userId) {
     final ArrayList<BlockStat> userBlockStats = Repository.getUserBlockStats(userId);
-    HashMap<String, BlockStat> userBlockStatsMap = new HashMap<>();
+    ConcurrentHashMap<String, BlockStat> userBlockStatsMap = new ConcurrentHashMap<>();
 
     for (BlockStat blockStat : userBlockStats) {
       String key = buildMapKey(blockStat.action, blockStat.block);
@@ -26,12 +26,12 @@ public class BlockStatsManager {
     blockStatsMap.put(userId, userBlockStatsMap);
   }
 
-  public static HashMap<String, BlockStat> getUserBlockStats(long userId) {
+  public static ConcurrentHashMap<String, BlockStat> getUserBlockStats(long userId) {
     return blockStatsMap.get(userId);
   }
 
   public static void handleUserAction(long userId, BlockAction action, Material material) {
-    HashMap<String, BlockStat> userStat = blockStatsMap.get(userId);
+    ConcurrentHashMap<String, BlockStat> userStat = blockStatsMap.get(userId);
 
     String blockStatKey = buildMapKey(action.toString(), material.toString());
 
@@ -70,7 +70,7 @@ public class BlockStatsManager {
   public static void saveAllCounts() {
     ArrayList<BlockStatEntity> stats = new ArrayList<>();
 
-    for (HashMap<String, BlockStat> userStats : blockStatsMap.values()) {
+    for (ConcurrentHashMap<String, BlockStat> userStats : blockStatsMap.values()) {
       for (BlockStat stat : userStats.values()) {
         stats.add(stat);
       }
