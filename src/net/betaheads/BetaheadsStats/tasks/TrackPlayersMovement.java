@@ -19,10 +19,19 @@ import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
 public class TrackPlayersMovement implements Runnable {
   public static final long SAMPLE_PERIOD_TICKS = 40L; // 2 seconds
   private static final long SAMPLE_PERIOD_SECONDS = SAMPLE_PERIOD_TICKS / 20;
-  private static final double TELEPORT_DISTANCE_THRESHOLD = 100; // blocks per sample, anything above is a teleport
 
-  private final ConcurrentHashMap<String, Sample> lastSamples = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, Double> metersRemainders = new ConcurrentHashMap<>();
+  // anything faster than the legit max speed is a teleport and is not counted:
+  // walking is ~4.3 blocks/sec (no sprint in beta), minecarts/boats ~8-10
+  private static final double MAX_WALK_DISTANCE_PER_SAMPLE = 12;
+  private static final double MAX_VEHICLE_DISTANCE_PER_SAMPLE = 24;
+
+  private final static ConcurrentHashMap<String, Sample> lastSamples = new ConcurrentHashMap<>();
+  private final static ConcurrentHashMap<String, Double> metersRemainders = new ConcurrentHashMap<>();
+
+  // forget the last position so the jump to the destination is not counted
+  public static void resetPlayer(String username) {
+    lastSamples.remove(username);
+  }
 
   @Override
   public void run() {
@@ -58,7 +67,9 @@ public class TrackPlayersMovement implements Runnable {
 
       double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-      if (distance <= 0 || distance > TELEPORT_DISTANCE_THRESHOLD) {
+      double maxDistance = current.inVehicle ? MAX_VEHICLE_DISTANCE_PER_SAMPLE : MAX_WALK_DISTANCE_PER_SAMPLE;
+
+      if (distance <= 0 || distance > maxDistance) {
         continue;
       }
 

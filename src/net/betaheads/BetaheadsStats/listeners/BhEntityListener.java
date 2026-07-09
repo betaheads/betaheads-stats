@@ -1,11 +1,13 @@
 package net.betaheads.BetaheadsStats.listeners;
 
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Cow;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
@@ -42,13 +44,9 @@ public class BhEntityListener extends EntityListener {
       recordActivity(victim.getName(), getDeathActivity(lastDamage), ActivityType.DEATH, 1);
     }
 
-    if (!(lastDamage instanceof EntityDamageByEntityEvent)) {
-      return;
-    }
+    Player killer = resolvePlayerDamager(lastDamage);
 
-    Entity damager = ((EntityDamageByEntityEvent) lastDamage).getDamager();
-
-    if (!(damager instanceof Player)) {
+    if (killer == null) {
       return;
     }
 
@@ -60,8 +58,6 @@ public class BhEntityListener extends EntityListener {
 
     ActivityType type = getKillActivityType(activity);
 
-    Player killer = (Player) damager;
-
     recordActivity(killer.getName(), activity, type, 1);
   }
 
@@ -72,37 +68,78 @@ public class BhEntityListener extends EntityListener {
     }
 
     Entity entity = event.getEntity();
-    long damage = event.getDamage();
+
+    // the server keeps firing damage events every tick while the entity is
+    // inside the invulnerability window after a hit (standing on a cactus,
+    // burning, etc), but the damage is not actually applied; vanilla skips
+    // them while noDamageTicks > maxNoDamageTicks / 2 (10 of 20)
+    if (entity instanceof LivingEntity && ((LivingEntity) entity).getNoDamageTicks() > 10) {
+      return;
+    }
 
     String victimName = entity instanceof Player ? ((Player) entity).getName() : null;
 
-    String damagerName = null;
-    boolean isArrowHit = false;
+    Player damagerPlayer = resolvePlayerDamager(event);
 
-    if (event instanceof EntityDamageByEntityEvent) {
-      Entity damager = ((EntityDamageByEntityEvent) event).getDamager();
-
-      if (damager instanceof Player) {
-        damagerName = ((Player) damager).getName();
-        isArrowHit = event instanceof EntityDamageByProjectileEvent;
-      }
-    }
-
-    if (victimName == null && damagerName == null) { // no players involved, don't even schedule a task
+    if (victimName == null && damagerPlayer == null) { // no players involved
       return;
     }
+
+    long damage = event.getDamage();
 
     if (victimName != null) {
       recordActivity(victimName, Activity.DAMAGE_TAKEN, ActivityType.COMMON, damage);
     }
 
-    if (damagerName != null) {
-      recordActivity(damagerName, Activity.DAMAGE_DEALT, ActivityType.COMMON, damage);
+    if (damagerPlayer != null) {
+      recordActivity(damagerPlayer.getName(), Activity.DAMAGE_DEALT, ActivityType.COMMON, damage);
 
-      if (isArrowHit) {
-        recordActivity(damagerName, Activity.ARROW_HITS, ActivityType.COMMON, 1);
+      if (isProjectileDamage(event)) {
+        recordActivity(damagerPlayer.getName(), Activity.ARROW_HITS, ActivityType.COMMON, 1);
       }
     }
+  }
+
+  private boolean isProjectileDamage(EntityDamageEvent event) {
+    if (event instanceof EntityDamageByProjectileEvent) {
+      return true;
+    }
+
+    if (event.getCause() != null && "PROJECTILE".equals(event.getCause().toString())) {
+      return true;
+    }
+
+    return event instanceof EntityDamageByEntityEvent
+        && ((EntityDamageByEntityEvent) event).getDamager() instanceof Arrow;
+  }
+
+  // depending on the server build getDamager() returns either the shooter
+  // or the arrow itself, handle both
+  private Player resolvePlayerDamager(EntityDamageEvent event) {
+    if (!(event instanceof EntityDamageByEntityEvent)) {
+      return null;
+    }
+
+    Entity damager = ((EntityDamageByEntityEvent) event).getDamager();
+
+    if (damager instanceof Player) {
+      return (Player) damager;
+    }
+
+    if (damager instanceof Arrow) {
+      // the b1.7.3 API has no Arrow.getShooter(), but some builds backport
+      // it, so try it via reflection
+      try {
+        Object shooter = damager.getClass().getMethod("getShooter").invoke(damager);
+
+        if (shooter instanceof Player) {
+          return (Player) shooter;
+        }
+      } catch (Exception e) {
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -156,9 +193,7 @@ public class BhEntityListener extends EntityListener {
 
       default:
         if (lastDamage instanceof EntityDamageByEntityEvent) {
-          Entity damager = ((EntityDamageByEntityEvent) lastDamage).getDamager();
-
-          return damager instanceof Player ? Activity.DEATH_PLAYER : Activity.DEATH_MOB;
+          return resolvePlayerDamager(lastDamage) != null ? Activity.DEATH_PLAYER : Activity.DEATH_MOB;
         }
 
         return Activity.DEATH_OTHER;

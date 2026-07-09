@@ -20,6 +20,8 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Entity;
 
@@ -30,6 +32,7 @@ import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.BetaheadsStats.entities.enums.Activity;
 import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
+import net.betaheads.BetaheadsStats.tasks.TrackPlayersMovement;
 
 public class BhPlayerListener extends PlayerListener {
   @Override
@@ -176,7 +179,19 @@ public class BhPlayerListener extends PlayerListener {
 
   @Override
   public void onPlayerPortal(PlayerPortalEvent event) {
+    TrackPlayersMovement.resetPlayer(event.getPlayer().getName());
+
     recordActivity(event.getPlayer().getName(), Activity.NETHER_PORTAL_USED, ActivityType.COMMON, 1);
+  }
+
+  @Override
+  public void onPlayerTeleport(PlayerTeleportEvent event) {
+    TrackPlayersMovement.resetPlayer(event.getPlayer().getName());
+  }
+
+  @Override
+  public void onPlayerRespawn(PlayerRespawnEvent event) {
+    TrackPlayersMovement.resetPlayer(event.getPlayer().getName());
   }
 
   @Override

@@ -207,12 +207,15 @@ public class StatsCommand implements CommandExecutor {
 
     for (ActivityType type : typesOrder) {
       ArrayList<String[]> rows = new ArrayList<>();
+      long totalCount = 0;
 
       for (ActivityStat stat : stats.values()) {
         if (stat.type.equals(type.toString())) {
-          String activityString = getReadableActivityString(Activity.valueOf(stat.activity));
+          Activity activity = Activity.valueOf(stat.activity);
 
-          rows.add(new String[] { activityString, Long.toString(stat.count) });
+          rows.add(new String[] { getReadableActivityString(activity), getReadableCountString(activity, stat.count) });
+
+          totalCount += stat.count;
         }
       }
 
@@ -221,6 +224,10 @@ public class StatsCommand implements CommandExecutor {
       }
 
       rows.sort((a, b) -> a[0].compareTo(b[0]));
+
+      if (type == ActivityType.DEATH) {
+        rows.add(0, new String[] { "Total", Long.toString(totalCount) });
+      }
 
       // a category header must have at least one row under it on the same page
       if (currentPage.size() + 1 >= pageSize) {
@@ -245,6 +252,16 @@ public class StatsCommand implements CommandExecutor {
     }
 
     return pages;
+  }
+
+  private String getReadableCountString(Activity activity, long count) {
+    switch (activity) {
+      case TIME_IN_NETHER:
+        return Utils.formatMillis(count * 1000);
+
+      default:
+        return Long.toString(count);
+    }
   }
 
   private String getReadableActivityTypeString(ActivityType type) {
@@ -372,7 +389,7 @@ public class StatsCommand implements CommandExecutor {
       case DISTANCE_BY_VEHICLE:
         return "Distance by vehicle (m)";
       case TIME_IN_NETHER:
-        return "Time in Nether (sec)";
+        return "Time in Nether";
 
       default:
         return "ACTIVITY_NOT_FOUND";
