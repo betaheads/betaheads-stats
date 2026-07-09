@@ -1,5 +1,8 @@
 package net.betaheads.BetaheadsStats.entities;
 
+import java.sql.Timestamp;
+
+import net.betaheads.utils.PluginLogger;
 import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.UserEntity;
 
@@ -30,6 +33,7 @@ public class User extends UserEntity {
 
   public void updateDbData() {
     this.played_ms = getTotalPlayedTime();
+    this.last_seen_at = new Timestamp(System.currentTimeMillis());
 
     Repository.updateUser(this);
   }
@@ -39,14 +43,34 @@ public class User extends UserEntity {
 
     if (user == null) {
       this.played_ms = 0;
+      this.first_login_at = new Timestamp(this.joinTimeMs);
+      this.last_login_at = new Timestamp(this.joinTimeMs);
+      this.last_seen_at = new Timestamp(this.joinTimeMs);
+      this.login_count = 1;
+
       Repository.saveUser(this);
 
       user = Repository.getUser(this.name);
+
+      if (user == null) { // DB is unreachable or broken, keep defaults to avoid NPEs
+        PluginLogger.error("[User] failed to load user data for '" + this.name + "', check DB errors above.");
+
+        return;
+      }
+    } else {
+      user.last_login_at = new Timestamp(this.joinTimeMs);
+      user.login_count = user.login_count + 1;
+
+      Repository.updateUserLogin(user);
     }
 
     this.id = user.id;
     this.name = user.name;
     this.played_ms = user.played_ms;
+    this.first_login_at = user.first_login_at;
+    this.last_login_at = user.last_login_at;
+    this.last_seen_at = user.last_seen_at;
+    this.login_count = user.login_count;
 
     this.totalWhenJoin = this.played_ms;
   }

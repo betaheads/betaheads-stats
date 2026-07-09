@@ -31,13 +31,17 @@ public interface Datasource {
 
   public int updateUser(UserEntity user);
 
+  public int updateUserLogin(UserEntity user);
+
+  public void addUserLoginColumns();
+
+  public void addLastSeenAtColumn();
+
   public void createBlockStatsTable();
 
   public ArrayList<BlockStatEntity> getUserBlockStats(Long userId);
 
-  public int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats);
-
-  public long saveBlockStat(BlockStatEntity blockStat);
+  public void saveBatchBlockStats(ArrayList<BlockStatEntity> blockStats);
 
   public void addDisplayNameColumn();
 
@@ -45,7 +49,7 @@ public interface Datasource {
 
   public ArrayList<ActivityStatEntity> getUserActivityStats(Long userId);
 
-  public int[] updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats);
+  public void saveBatchActivityStats(ArrayList<ActivityStatEntity> activityStats);
 
-  public long saveActivityStat(ActivityStatEntity activityStats);
+  public void addStatsUniqueIndexes();
 }

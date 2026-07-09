@@ -1,6 +1,5 @@
 package net.betaheads.BetaheadsStats.entities;
 
-import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.BlockStatEntity;
 
 public class BlockStat extends BlockStatEntity {
@@ -16,11 +15,7 @@ public class BlockStat extends BlockStatEntity {
     this.count = entity.count;
   }
 
-  public void increaseCount() {
+  public synchronized void increaseCount() {
     this.count++;
-  }
-
-  public long createDbData() {
-    return Repository.saveBlockStat(this);
   }
 }

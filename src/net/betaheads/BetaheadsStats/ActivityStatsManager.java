@@ -1,7 +1,7 @@
 package net.betaheads.BetaheadsStats;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.betaheads.BetaheadsStats.entities.ActivityStat;
 import net.betaheads.BetaheadsStats.entities.enums.Activity;
@@ -10,58 +10,75 @@ import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.ActivityStatEntity;
 
 public class ActivityStatsManager {
-  private final static HashMap<Long, HashMap<String, ActivityStat>> activityStatsMap = new HashMap<>();
+  private final static ConcurrentHashMap<Long, ConcurrentHashMap<String, ActivityStat>> activityStatsMap = new ConcurrentHashMap<>();
 
   public static void addUserRecords(Long userId) {
     final ArrayList<ActivityStat> userActivityStats = Repository.getUserActivityStats(userId);
-    HashMap<String, ActivityStat> userActivityStatsMap = new HashMap<>();
+    ConcurrentHashMap<String, ActivityStat> userActivityStatsMap = new ConcurrentHashMap<>();
 
-    for (ActivityStat activityStatStat : userActivityStats) {
-      String key = buildMapKey(activityStatStat.type, activityStatStat.activity);
+    if (userActivityStats != null) { // null on DB error, start with empty stats
+      for (ActivityStat activityStatStat : userActivityStats) {
+        String key = buildMapKey(activityStatStat.type, activityStatStat.activity);
 
-      userActivityStatsMap.put(key, activityStatStat);
+        userActivityStatsMap.put(key, activityStatStat);
+      }
     }
 
     activityStatsMap.put(userId, userActivityStatsMap);
   }
 
-  public static HashMap<String, ActivityStat> getUserActivityStats(long userId) {
+  public static ConcurrentHashMap<String, ActivityStat> getUserActivityStats(long userId) {
     return activityStatsMap.get(userId);
   }
 
   public static void handleUserActivity(long userId, Activity activity, ActivityType type) {
-    HashMap<String, ActivityStat> userStat = activityStatsMap.get(userId);
+    handleUserActivity(userId, activity, type, 1);
+  }
+
+  // pure in-memory, safe to call from any thread; new stats are inserted
+  // into the DB later by the save tasks
+  public static void handleUserActivity(long userId, Activity activity, ActivityType type, long amount) {
+    ConcurrentHashMap<String, ActivityStat> userStat = activityStatsMap.get(userId);
+
+    if (userStat == null) { // user already quit
+      return;
+    }
 
     String activityStatKey = buildMapKey(type.toString(), activity.toString());
 
     ActivityStat activityStat = userStat.get(activityStatKey);
 
     if (activityStat == null) {
-      activityStat = new ActivityStat();
+      ActivityStat newStat = new ActivityStat();
 
-      activityStat.user_id = userId;
-      activityStat.type = type.toString();
-      activityStat.activity = activity.toString();
-      activityStat.count = 1;
+      newStat.id = 0; // not in DB yet
+      newStat.user_id = userId;
+      newStat.type = type.toString();
+      newStat.activity = activity.toString();
+      newStat.count = 0;
 
-      Long id = activityStat.saveToDb();
+      ActivityStat existingStat = userStat.putIfAbsent(activityStatKey, newStat);
 
-      activityStat.id = id;
-
-      userStat.put(activityStatKey, activityStat);
-    } else {
-      activityStat.increaseCount();
+      activityStat = existingStat == null ? newStat : existingStat;
     }
+
+    activityStat.increaseCount(amount);
   }
 
   public static void removeUserRecords(long userId) {
+    ConcurrentHashMap<String, ActivityStat> userStats = activityStatsMap.get(userId);
+
+    if (userStats == null) {
+      return;
+    }
+
     ArrayList<ActivityStatEntity> stats = new ArrayList<>();
 
-    for (ActivityStat activityStat : activityStatsMap.get(userId).values()) {
+    for (ActivityStat activityStat : userStats.values()) {
       stats.add(activityStat);
     }
 
-    Repository.updateBatchActivityStatsCounts(stats);
+    Repository.saveBatchActivityStats(stats);
 
     activityStatsMap.remove(userId);
   }
@@ -69,13 +86,13 @@ public class ActivityStatsManager {
   public static void saveAllCounts() {
     ArrayList<ActivityStatEntity> stats = new ArrayList<>();
 
-    for (HashMap<String, ActivityStat> userStats : activityStatsMap.values()) {
+    for (ConcurrentHashMap<String, ActivityStat> userStats : activityStatsMap.values()) {
       for (ActivityStat stat : userStats.values()) {
         stats.add(stat);
       }
     }
 
-    Repository.updateBatchActivityStatsCounts(stats);
+    Repository.saveBatchActivityStats(stats);
   };
 
   public static String buildMapKey(String type, String activity) {

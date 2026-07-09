@@ -165,6 +165,15 @@ public class Utils {
 		return result.toString();
 	}
 
+	// System.out.println(formatDate(new Date())); // Output: "07.07.2026 15:30"
+	public static String formatDate(java.util.Date date) {
+		if (date == null) {
+			return "-";
+		}
+
+		return new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date);
+	}
+
 	public static String toReadableName(String str) {
 		String name = str;
 		name = name.replace("_", " ");

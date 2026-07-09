@@ -1,9 +1,9 @@
 package net.betaheads.utils.db.entities;
 
 public class BlockStatEntity {
-  public long id;
+  public volatile long id; // 0 means not saved to DB yet
   public long user_id;
   public String block;
   public String action;
-  public long count;
+  public volatile long count;
 }

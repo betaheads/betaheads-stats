@@ -1,9 +1,9 @@
 package net.betaheads.utils.db.entities;
 
 public class ActivityStatEntity {
-  public long id;
+  public volatile long id; // 0 means not saved to DB yet
   public long user_id;
   public String activity;
   public String type;
-  public long count;
+  public volatile long count;
 }

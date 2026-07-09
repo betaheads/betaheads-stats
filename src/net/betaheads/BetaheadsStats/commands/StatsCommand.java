@@ -3,10 +3,11 @@ package net.betaheads.BetaheadsStats.commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,12 +15,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import net.betaheads.BetaheadsStats.ActivityStatsManager;
+import net.betaheads.BetaheadsStats.BetaheadsStats;
 import net.betaheads.BetaheadsStats.BlockStatsManager;
+import net.betaheads.BetaheadsStats.Config;
 import net.betaheads.BetaheadsStats.UserManager;
 import net.betaheads.BetaheadsStats.entities.ActivityStat;
 import net.betaheads.BetaheadsStats.entities.BlockStat;
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.BetaheadsStats.entities.enums.Activity;
+import net.betaheads.BetaheadsStats.entities.enums.ActivityType;
 import net.betaheads.BetaheadsStats.entities.enums.BlockAction;
 import net.betaheads.utils.Utils;
 
@@ -30,26 +34,38 @@ public class StatsCommand implements CommandExecutor {
       return true;
     }
 
+    Bukkit.getScheduler().scheduleAsyncDelayedTask(BetaheadsStats.plugin, () -> {
+      String firstArg = "";
+      try {
+        firstArg = args[0];
+      } catch (Exception e) {
+      }
+
+      if (firstArg.equalsIgnoreCase("a")) {
+        showActivityStats(sender, args);
+      } else {
+        showBlockStats(sender, args);
+      }
+    });
+
+    return true;
+  }
+
+  private void showBlockStats(CommandSender sender, String[] args) {
+    int pageSize = 9;
+
     int page = 1;
-    String firstArg = "";
     try {
-      firstArg = args[0];
       page = Integer.parseInt(args[0]);
     } catch (Exception e) {
     }
-
-    if (firstArg.equalsIgnoreCase("a")) {
-      return showActivityStats(sender, cmd, label, args);
-    }
-
-    int pageSize = 9;
 
     Player player = (Player) sender;
     String username = player.getName();
 
     User user = UserManager.getUser(username);
 
-    HashMap<String, BlockStat> stats = BlockStatsManager.getUserBlockStats(user.id);
+    ConcurrentHashMap<String, BlockStat> stats = BlockStatsManager.getUserBlockStats(user.id);
 
     int colWidth = getMaxCountLength(stats.values());
 
@@ -60,21 +76,23 @@ public class StatsCommand implements CommandExecutor {
     pages++; // first page for total playtime
 
     page = pages < page ? pages : page;
+    page = page < 1 ? 1 : page;
 
     List<String[]> statsRows = null;
 
     if (page == 1) {
-      player.sendMessage(ChatColor.GOLD + "--- Betaheads stats ---");
+      player.sendMessage(ChatColor.GOLD + "--- " + Config.getStatsTitle() + " ---");
       player.sendMessage(ChatColor.GOLD + "Total playtime: " + Utils.formatMillis(user.getTotalPlayedTime()));
       player.sendMessage(
           ChatColor.GOLD + "Current session playtime: " + Utils.formatMillis(user.getCurrentSessionPlayTime()));
+      player.sendMessage(ChatColor.GOLD + "Logins count: " + user.login_count);
+      player.sendMessage(ChatColor.GOLD + "First login: " + Utils.formatDate(user.first_login_at));
+      player.sendMessage(ChatColor.GOLD + "Last login: " + Utils.formatDate(user.last_login_at));
 
       player.sendMessage(ChatColor.GOLD + " ");
       player.sendMessage(ChatColor.GOLD + "See block statistic on next page ->");
       player.sendMessage(
           ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats <page number>' to move through pages.");
-
-      player.sendMessage(ChatColor.GOLD + " ");
 
       player.sendMessage(ChatColor.GOLD + "See activity statistic using '/stats a <page number>' command.");
     } else {
@@ -95,11 +113,9 @@ public class StatsCommand implements CommandExecutor {
 
       player.sendMessage(ChatColor.GOLD + "Page " + page + "/" + pages);
     }
-
-    return true;
   }
 
-  private ArrayList<String[]> groupByBlock(HashMap<String, BlockStat> stats) {
+  private ArrayList<String[]> groupByBlock(ConcurrentHashMap<String, BlockStat> stats) {
     HashSet<String> blocksNames = new HashSet<>();
 
     for (BlockStat stat : stats.values()) {
@@ -140,7 +156,7 @@ public class StatsCommand implements CommandExecutor {
     return max;
   }
 
-  private boolean showActivityStats(CommandSender sender, Command cmd, String label, String[] args) {
+  private void showActivityStats(CommandSender sender, String[] args) {
     int pageSize = 9;
 
     Player player = (Player) sender;
@@ -148,47 +164,122 @@ public class StatsCommand implements CommandExecutor {
 
     User user = UserManager.getUser(username);
 
-    HashMap<String, ActivityStat> stats = ActivityStatsManager.getUserActivityStats(user.id);
+    ConcurrentHashMap<String, ActivityStat> stats = ActivityStatsManager.getUserActivityStats(user.id);
 
     if (stats.isEmpty()) {
       player.sendMessage(ChatColor.GOLD + "You don't have any activity statistics yet.");
-      return true;
+      return;
     }
 
-    Collection<ActivityStat> activityStatsCollection = stats.values();
-    ArrayList<ActivityStat> activityStatsArr = new ArrayList<>();
+    ArrayList<ArrayList<String>> statsPages = groupByActivityType(stats, pageSize);
 
-    for (ActivityStat activityStat : activityStatsCollection) {
-      activityStatsArr.add(activityStat);
-    }
-
-    int pages = activityStatsArr.size() / pageSize + ((activityStatsArr.size() % pageSize == 0) ? 0 : 1);
+    int pages = statsPages.size();
 
     int page = 1;
     try {
-      page = Integer.parseInt(args[0]);
+      page = Integer.parseInt(args[1]);
     } catch (Exception e) {
     }
 
     page = pages < page ? pages : page;
+    page = page < 1 ? 1 : page;
 
-    List<ActivityStat> statsRows = null;
-
-    int startIndex = pageSize * (page - 1);
-    int endIndex = startIndex + pageSize;
-    endIndex = endIndex > activityStatsArr.size() ? activityStatsArr.size() : endIndex;
-
-    statsRows = activityStatsArr.subList(startIndex, endIndex);
-
-    for (ActivityStat row : statsRows) {
-      String activityString = this.getReadableActivityString(Activity.valueOf(row.activity));
-
-      player.sendMessage(ChatColor.GOLD + activityString + ": " + ChatColor.DARK_GREEN + row.count);
+    for (String row : statsPages.get(page - 1)) {
+      player.sendMessage(row);
     }
 
-    player.sendMessage(ChatColor.GOLD + "Page " + page + "/" + pages);
+    player.sendMessage(
+        ChatColor.GOLD + "Page " + page + "/" + pages + " '/stats a <page number>' to move through pages.");
+  }
 
-    return true;
+  private ArrayList<ArrayList<String>> groupByActivityType(ConcurrentHashMap<String, ActivityStat> stats,
+      int pageSize) {
+    ActivityType[] typesOrder = {
+        ActivityType.COMMON,
+        ActivityType.HOSTILE_MOB_KILL,
+        ActivityType.PEACEFUL_MOB_KILL,
+        ActivityType.PLAYER_KILL,
+        ActivityType.DEATH
+    };
+
+    ArrayList<ArrayList<String>> pages = new ArrayList<>();
+    ArrayList<String> currentPage = new ArrayList<>();
+
+    for (ActivityType type : typesOrder) {
+      ArrayList<String[]> rows = new ArrayList<>();
+      long totalCount = 0;
+
+      for (ActivityStat stat : stats.values()) {
+        if (stat.type.equals(type.toString())) {
+          Activity activity = Activity.valueOf(stat.activity);
+
+          rows.add(new String[] { getReadableActivityString(activity), getReadableCountString(activity, stat.count) });
+
+          totalCount += stat.count;
+        }
+      }
+
+      if (rows.isEmpty()) {
+        continue;
+      }
+
+      rows.sort((a, b) -> a[0].compareTo(b[0]));
+
+      if (type == ActivityType.DEATH) {
+        rows.add(0, new String[] { "Total", Long.toString(totalCount) });
+      }
+
+      // a category header must have at least one row under it on the same page
+      if (currentPage.size() + 1 >= pageSize) {
+        pages.add(currentPage);
+        currentPage = new ArrayList<>();
+      }
+
+      currentPage.add(ChatColor.GOLD + "--- " + getReadableActivityTypeString(type) + " ---");
+
+      for (String[] row : rows) {
+        if (currentPage.size() == pageSize) {
+          pages.add(currentPage);
+          currentPage = new ArrayList<>();
+        }
+
+        currentPage.add(ChatColor.GOLD + row[0] + ": " + ChatColor.DARK_GREEN + row[1]);
+      }
+    }
+
+    if (!currentPage.isEmpty()) {
+      pages.add(currentPage);
+    }
+
+    return pages;
+  }
+
+  private String getReadableCountString(Activity activity, long count) {
+    switch (activity) {
+      case TIME_IN_NETHER:
+        return Utils.formatMillis(count * 1000);
+
+      default:
+        return Long.toString(count);
+    }
+  }
+
+  private String getReadableActivityTypeString(ActivityType type) {
+    switch (type) {
+      case COMMON:
+        return "Common actions";
+      case HOSTILE_MOB_KILL:
+        return "Hostile mob kills";
+      case PEACEFUL_MOB_KILL:
+        return "Peaceful mob kills";
+      case PLAYER_KILL:
+        return "Player kills";
+      case DEATH:
+        return "Deaths";
+
+      default:
+        return "TYPE_NOT_FOUND";
+    }
   }
 
   private String getReadableActivityString(Activity activity) {
@@ -197,6 +288,108 @@ public class StatsCommand implements CommandExecutor {
         return "Sheared sheeps";
       case FISH_CAUGHT:
         return "Fish caught";
+      case ZOMBIE_KILL:
+        return "Zombies killed";
+      case SKELETON_KILL:
+        return "Skeletons killed";
+      case SPIDER_KILL:
+        return "Spiders killed";
+      case CREEPER_KILL:
+        return "Creepers killed";
+      case SLIME_KILL:
+        return "Slimes killed";
+      case PIG_ZOMBIE_KILL:
+        return "Zombie pigmen killed";
+      case GHAST_KILL:
+        return "Ghasts killed";
+      case GIANT_KILL:
+        return "Giants killed";
+      case CHICKEN_KILL:
+        return "Chickens killed";
+      case COW_KILL:
+        return "Cows killed";
+      case PIG_KILL:
+        return "Pigs killed";
+      case SHEEP_KILL:
+        return "Sheeps killed";
+      case SQUID_KILL:
+        return "Squids killed";
+      case WOLF_KILL:
+        return "Wolves killed";
+      case PLAYER_KILL:
+        return "Players killed";
+      case DEATH_FALL:
+        return "From falling";
+      case DEATH_DROWNING:
+        return "From drowning";
+      case DEATH_LAVA:
+        return "In lava";
+      case DEATH_FIRE:
+        return "From fire";
+      case DEATH_EXPLOSION:
+        return "From explosions";
+      case DEATH_MOB:
+        return "From mobs";
+      case DEATH_PLAYER:
+        return "From players";
+      case DEATH_VOID:
+        return "In the void";
+      case DEATH_SUFFOCATION:
+        return "From suffocation";
+      case DEATH_LIGHTNING:
+        return "From lightning";
+      case DEATH_CACTUS:
+        return "From cactus";
+      case DEATH_OTHER:
+        return "Other";
+      case DAMAGE_DEALT:
+        return "Damage dealt";
+      case DAMAGE_TAKEN:
+        return "Damage taken";
+      case ARROW_HITS:
+        return "Arrow hits";
+      case ITEMS_PICKED_UP:
+        return "Items picked up";
+      case ITEMS_DROPPED:
+        return "Items dropped";
+      case WATER_BUCKET_FILLED:
+        return "Water buckets filled";
+      case LAVA_BUCKET_FILLED:
+        return "Lava buckets filled";
+      case WATER_BUCKET_EMPTIED:
+        return "Water buckets emptied";
+      case LAVA_BUCKET_EMPTIED:
+        return "Lava buckets emptied";
+      case NIGHTS_SLEPT:
+        return "Nights slept";
+      case NETHER_PORTAL_USED:
+        return "Nether portals used";
+      case EGGS_THROWN:
+        return "Eggs thrown";
+      case CHICKENS_HATCHED:
+        return "Chickens hatched";
+      case SIGNS_WRITTEN:
+        return "Signs written";
+      case PAINTINGS_PLACED:
+        return "Paintings placed";
+      case FIRES_STARTED:
+        return "Fires started";
+      case CHAT_MESSAGES:
+        return "Chat messages sent";
+      case COMMANDS_USED:
+        return "Commands used";
+      case COW_MILKED:
+        return "Cows milked";
+      case SHEEP_DYED:
+        return "Sheeps dyed";
+      case WOLF_TAMED:
+        return "Wolves tamed";
+      case DISTANCE_WALKED:
+        return "Distance walked (m)";
+      case DISTANCE_BY_VEHICLE:
+        return "Distance by vehicle (m)";
+      case TIME_IN_NETHER:
+        return "Time in Nether";
 
       default:
         return "ACTIVITY_NOT_FOUND";

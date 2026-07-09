@@ -51,6 +51,18 @@ public class Repository {
     return repo.updateUser(user);
   }
 
+  public static int updateUserLogin(UserEntity user) {
+    return repo.updateUserLogin(user);
+  }
+
+  public static void addUserLoginColumns() {
+    repo.addUserLoginColumns();
+  }
+
+  public static void addLastSeenAtColumn() {
+    repo.addLastSeenAtColumn();
+  }
+
   public static void createBlockStatsTable() {
     repo.createBlockStatsTable();
   };
@@ -67,12 +79,8 @@ public class Repository {
     return res;
   };
 
-  public static int[] updateBatchBlockStatsCounts(ArrayList<BlockStatEntity> blockStats) {
-    return repo.updateBatchBlockStatsCounts(blockStats);
-  }
-
-  public static long saveBlockStat(BlockStatEntity blockStat) {
-    return repo.saveBlockStat(blockStat);
+  public static void saveBatchBlockStats(ArrayList<BlockStatEntity> blockStats) {
+    repo.saveBatchBlockStats(blockStats);
   }
 
   public static void addDisplayNameColumn() {
@@ -95,11 +103,11 @@ public class Repository {
     return res;
   };
 
-  public static int[] updateBatchActivityStatsCounts(ArrayList<ActivityStatEntity> activityStats) {
-    return repo.updateBatchActivityStatsCounts(activityStats);
+  public static void saveBatchActivityStats(ArrayList<ActivityStatEntity> activityStats) {
+    repo.saveBatchActivityStats(activityStats);
   }
 
-  public static long saveActivityStat(ActivityStatEntity blockStat) {
-    return repo.saveActivityStat(blockStat);
+  public static void addStatsUniqueIndexes() {
+    repo.addStatsUniqueIndexes();
   }
 }

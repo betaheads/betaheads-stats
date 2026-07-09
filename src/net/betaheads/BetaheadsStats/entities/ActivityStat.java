@@ -1,6 +1,5 @@
 package net.betaheads.BetaheadsStats.entities;
 
-import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.ActivityStatEntity;
 
 public class ActivityStat extends ActivityStatEntity {
@@ -16,10 +15,10 @@ public class ActivityStat extends ActivityStatEntity {
   }
 
   public void increaseCount() {
-    this.count++;
+    increaseCount(1);
   }
 
-  public long saveToDb() {
-    return Repository.saveActivityStat(this);
+  public synchronized void increaseCount(long amount) {
+    this.count += amount;
   }
 }

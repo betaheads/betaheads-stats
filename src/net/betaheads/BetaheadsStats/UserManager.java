@@ -1,14 +1,15 @@
 package net.betaheads.BetaheadsStats;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.betaheads.BetaheadsStats.entities.User;
 import net.betaheads.utils.db.Repository;
 import net.betaheads.utils.db.entities.UserEntity;
 
 public class UserManager {
-  private static HashMap<String, User> usersMap = new HashMap<String, User>();
+  private static ConcurrentHashMap<String, User> usersMap = new ConcurrentHashMap<String, User>();
 
   public static void addUser(String displayName) {
     String username = displayName.toLowerCase();
@@ -22,6 +23,10 @@ public class UserManager {
     String username = displayName.toLowerCase();
 
     User user = usersMap.get(username);
+
+    if (user == null) {
+      return;
+    }
 
     user.updateDbData();
 
@@ -37,8 +42,11 @@ public class UserManager {
   public static void saveAllUsersData() {
     ArrayList<UserEntity> userEntities = new ArrayList<>();
 
+    Timestamp now = new Timestamp(System.currentTimeMillis());
+
     for (User user : usersMap.values()) {
       user.played_ms = user.getTotalPlayedTime();
+      user.last_seen_at = now; // user is online right now
 
       userEntities.add(user);
     }
